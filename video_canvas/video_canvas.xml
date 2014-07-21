@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+  <ModulePrefs title="Video Drawer (alpha)">
+    <Require feature="opensocial-0.8" />
+    <Require feature="pubsub"/>
+    <Require feature="dynamic-height"/>
+  </ModulePrefs>
+
+  <Content type="html">
+    <![CDATA[
+			
+				
+ <head> 
+    
+<link href="http://golovin.de/ba/video_canvas/app.css" rel="stylesheet" />
+    <script src =" http://open-app.googlecode.com/files/openapp.js" ></script >
+    <script src ="http://dbis.rwth-aachen.de/gadgets/iwc/lib/iwc.js"> </script >
+    
+    <script type ="application/javascript">
+      var iwcClient ;
+      function init () {
+      iwcClient = new iwc.Client () ;
+      var iwcCallback = function ( intent ) {
+      console.log (" Received Intent :") ;
+      console.log ( intent ) ;
+      };
+      //iwcClient.connect ( iwcCallback ) ;
+      }
+      gadgets.util.registerOnLoadHandler ( init ) ;
+    </script >
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script>
+    <script> 
+    $(function(){
+      $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm"); 
+	  console.log('jup!!');
+    });
+    </script> 
+  </head> 
+
+     <div id="includedContent"></div>
+ 
+		 
+		 ]]>
+  </Content>
+</Module>
