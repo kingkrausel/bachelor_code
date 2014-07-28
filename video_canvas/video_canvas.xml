@@ -3,7 +3,17 @@
   <ModulePrefs title="Video Drawer (alpha)">
     <Require feature="opensocial-0.8" />
     <Require feature="pubsub"/>
+    <Require feature="openapp" />
     <Require feature="dynamic-height"/>
+    <OAuth>
+      <Service name="openapp" xmlns:openapp="http://www.role-project.eu/xml/openapp/opensocialext/"
+        openapp:service="http://purl.org/role/terms/spaceService"
+        openapp:permitReadAppend="http://purl.org/role/terms/data">
+        <Request method="" url=""/>
+        <Authorization url=""/>
+        <Access method="" url=""/>
+      </Service>
+    </OAuth>
   </ModulePrefs>
 
   <Content type="html">
@@ -13,8 +23,14 @@
  <head> 
     
 <link href="http://golovin.de/ba/video_canvas/app.css" rel="stylesheet" />
-    <script src =" http://open-app.googlecode.com/files/openapp.js" ></script >
+    
     <script src ="http://dbis.rwth-aachen.de/gadgets/iwc/lib/iwc.js"> </script >
+    
+    <script type="text/javascript" src="http://golovin.de/ba/video_canvas/config.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/dojo.js"></script>
+	<script type="text/javascript" src="http://golovin.de/ba/video_canvas/collaboration.js"></script>
+
+  <script src="http://open-app.googlecode.com/files/openapp.js"></script>
     
     <script type ="application/javascript">
       var iwcClient ;

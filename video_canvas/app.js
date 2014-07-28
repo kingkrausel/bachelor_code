@@ -5,7 +5,7 @@
 var XML_TEST = '<svg height="100" width="100">< circle cx = "50" cy = "50" r = "40" stroke = "black" stroke-width = "3" fill ="red" /></svg>';
 
 var VideoController = (function () {
-    ///public isPlaying: boolean = false;
+    /////public isPlaying: boolean = false;
     function VideoController(id) {
         if (typeof id === "undefined") { id = 'video_player'; }
         var _this = this;
@@ -13,6 +13,7 @@ var VideoController = (function () {
         this.svg_docs = [];
         this.video = document.getElementById(id);
         this.start_video_observer();
+        console.log('Collaboration:', collab);
 
         $(this.video).bind("durationchange", function () {
             _this.duration = _this.video.duration;
@@ -75,7 +76,7 @@ var VideoController = (function () {
         this.canvas.add(objects[0]);
         });*/
         //fabric.loadSVGFromString(XML_TEST, (a, b) => { console.log('Denis Golovin');});
-        fabric.loadSVGFromURL("http://golovin.de/ba/video_canvas/1.svg", function (objects, options) {
+        fabric.loadSVGFromURL("http://golovin.de/ba/video_canvas/svg/1.svg", function (objects, options) {
             //this.canvas.add(objects[0]);
             _this.svg_docs.push({ doc: objects[0], time: 5.0 });
             //this.svg_docs[5.0] = objects[0];
@@ -104,6 +105,20 @@ var VideoController = (function () {
         }
 
         console.log(videoCtr.svg_docs);
+
+        var layer = 0;
+        var anno = { time: time, doc: object };
+        var op = collab.ote.createOp("change", anno, "insert", layer);
+        collab.sendOp(collab.ote.localEvent(op));
+
+        if (collab.t === 0) {
+            collab.t = setTimeout(collab.flush_actions, collab.actionbufferflushdelay);
+        }
+
+        // if buffer length exceeds maximum, flush buffer.
+        if (collab.actionbuffer.length >= collab.actionbuffermaxlength) {
+            collab.flush_actions();
+        }
 
         var intent = {
             "component": "",
@@ -184,6 +199,9 @@ var VideoController = (function () {
         return res;
     };
 
+    VideoController.prototype.apply_op = function (op) {
+    };
+
     VideoController.prototype.start_video_observer = function () {
         var _this = this;
         window.setInterval(function () {
@@ -239,9 +257,26 @@ function router(intent) {
                 videoCtr.play_pause();
             videoCtr.video.currentTime = parseFloat(intent.extras.time);
             videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
+            console.log('coll', collab);
             break;
         case 'TOGGLE':
             videoCtr.toggle();
+            break;
+
+        case 'COLL_WRITE':
+            console.log('collab intent', intent);
+            if (intent.sender.indexOf("@") > -1) {
+                var len = intent.extras.names.length;
+                var i;
+                for (i = 0; i < len; i++) {
+                    var toApply = collab.ote.remoteEvent(parseInt(new Date().getTime(), 10), intent.extras.names[i]);
+                    if (toApply) {
+                        //update_pad(toApply);
+                    } else {
+                        console.error("Couldn't apply remote Event!!!!");
+                    }
+                }
+            }
             break;
     }
 }
