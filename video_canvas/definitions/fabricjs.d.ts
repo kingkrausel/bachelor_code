@@ -30,7 +30,7 @@ declare module fabric {
         fire(eventName: string, options);
         stopObserving(eventName: string, handler: (e) => any);
 
-        off(eventName, handler);
+        off(eventName, handler?);
     }
 
     export interface IFilter {
@@ -218,7 +218,7 @@ declare module fabric {
     }
 
     export interface IObject extends IObservable {
-
+        toSVG(): string;
         // constraint properties
         lockMovementX: boolean;
         lockMovementY: boolean;
@@ -852,6 +852,7 @@ declare module fabric {
         toArray(arrayLike): any[];
         toFixed(number, fractionDigits);
         wrapElement(element: HTMLElement, wrapper, attributes);
+        enlivenObjects(objects:IObject[],callback:(objs)=>void);
     }
 }
  

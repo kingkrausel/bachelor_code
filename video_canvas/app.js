@@ -10,11 +10,11 @@ var VideoController = (function () {
         if (typeof id === "undefined") { id = 'video_player'; }
         var _this = this;
         this.last_video_time = 0;
-        this.svg_docs = [];
+        this.annotations = [];
         this.video = document.getElementById(id);
         this.start_video_observer();
-        console.log('Collaboration:', collab);
 
+        //console.log('Collaboration:',collab);
         $(this.video).bind("durationchange", function () {
             _this.duration = _this.video.duration;
             var dur = _this.duration;
@@ -44,43 +44,16 @@ var VideoController = (function () {
         this.canvas.setWidth(640);
         this.svg_adapter = new Adapter(this.canvas);
 
-        /*this.svg_adapter.register_annotation_event((jup:any)=> {
-        console.log('doc:',jup);
-        var intent = {
-        "component": "",
-        "sender": "",
-        "data": "",
-        "dataType": "text/xml",
-        "action": "NEW_ANNOTATION",
-        "categories": [],
-        "flags": ["PUBLISH_LOCAL"],
-        "extras": { "time": videoCtr.video.currentTime }
-        };
-        videoCtr.svg_docs.push({ time: videoCtr.video.currentTime, doc: jup });
-        console.log(videoCtr.svg_docs);
-        if (iwc.util.validateIntent(intent)) {
-        iwcClient.publish(intent);
-        }
-        });*/
         this.svg_adapter.register_annotation_event(this.on_object_added);
 
         jQuery('.canvas-container').css({ 'position': 'absolute' });
-        console.log(fabric.loadSVGFromString);
 
-        /*document.getElementById('c').addEventListener('keydown', function (e) {
-        if (e.keyCode == 46)
-        this.canvas.remove(this.canvas.getActiveObject());
-        }, false);*/
-        /*fabric.loadSVGFromString(XML_TEST, (objects, options) => {
-        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        this.canvas.add(objects[0]);
-        });*/
-        //fabric.loadSVGFromString(XML_TEST, (a, b) => { console.log('Denis Golovin');});
         fabric.loadSVGFromURL("http://golovin.de/ba/video_canvas/svg/1.svg", function (objects, options) {
             //this.canvas.add(objects[0]);
-            _this.svg_docs.push({ doc: objects[0], time: 5.0 });
+            //this.annotations.push({ doc: objects[0], time: 5.0 });
             //this.svg_docs[5.0] = objects[0];
             //console.log(this.svg_docs);
+            _this.update_anno({ doc: objects[0], time: 5.0 });
         });
     }
     VideoController.prototype.set_video_time = function (time) {
@@ -91,48 +64,91 @@ var VideoController = (function () {
     };
 
     VideoController.prototype.on_object_added = function (object) {
-        //
-        //console.log('object added jo!', videoCtr.svg_docs);
         var time = parseFloat(videoCtr.video.currentTime.toFixed(2));
-        var result = videoCtr.annotation_at(time);
+        videoCtr.update_anno({ time: time, doc: object });
 
-        console.log('result', result);
-        if (!result)
-            videoCtr.svg_docs.push({ time: time, doc: jQuery.extend(true, [], object) });
-        else {
-            result.doc = jQuery.extend(true, [], object); //clone
-            time = result.time; // so no new (visible) marker is created
-        }
-
-        console.log(videoCtr.svg_docs);
+        console.log('json fabric', object.toJSON(null));
 
         var layer = 0;
+
+        //if (object instanceof Array) console.error('warum ist das ein array??');
         var anno = { time: time, doc: object };
         var op = collab.ote.createOp("change", anno, "insert", layer);
         collab.sendOp(collab.ote.localEvent(op));
 
         if (collab.t === 0) {
-            collab.t = setTimeout(collab.flush_actions, collab.actionbufferflushdelay);
+            collab.t = setTimeout(function () {
+                collab.flush_actions();
+            }, collab.actionbufferflushdelay);
         }
 
         // if buffer length exceeds maximum, flush buffer.
         if (collab.actionbuffer.length >= collab.actionbuffermaxlength) {
             collab.flush_actions();
         }
+    };
 
-        var intent = {
-            "component": "",
-            "sender": "",
-            "data": "",
-            "dataType": "text/xml",
-            "action": "NEW_ANNOTATION",
-            "categories": [],
-            "flags": ["PUBLISH_LOCAL"],
-            "extras": { "time": time }
-        };
-        if (iwc.util.validateIntent(intent)) {
-            iwcClient.publish(intent);
+    VideoController.prototype.update_anno = function (anno) {
+        var _this = this;
+        var curr_anno = this.annotation_at(anno.time);
+        if (!curr_anno) {
+            var intent = {
+                "component": "",
+                "sender": "",
+                "data": "",
+                "dataType": "text/xml",
+                "action": "NEW_ANNOTATION",
+                "categories": [],
+                "flags": ["PUBLISH_LOCAL"],
+                "extras": { "time": anno.time }
+            };
+            if (iwc.util.validateIntent(intent)) {
+                iwcClient.publish(intent);
+            }
         }
+
+        if (anno.doc instanceof fabric.Path) {
+            if (!curr_anno) {
+                this.annotations.push({ time: anno.time, doc: [jQuery.extend(true, {}, anno.doc)] });
+            } else {
+                curr_anno.doc.push(jQuery.extend(true, {}, anno.doc)); //cloning is important, since objs get destroyed if not displayed
+            }
+        } else
+            fabric.util.enlivenObjects([anno.doc], function (objects) {
+                anno.doc = objects[0];
+
+                //this.canvas.add(objects[0]);
+                var curr_anno = _this.annotation_at(anno.time);
+                if (!curr_anno)
+                    _this.annotations.push({ time: anno.time, doc: [jQuery.extend(true, {}, anno.doc)] });
+                else {
+                    curr_anno.doc.push(jQuery.extend(true, {}, anno.doc)); //cloning is important, since objs get destroyed if not displayed
+                }
+            });
+
+        this.annotations.sort(function (a, b) {
+            return a.time - b.time;
+        });
+    };
+
+    VideoController.prototype.applyOp = function (op) {
+        if (op.type === "insert") {
+            this.update_anno(op.value);
+            this.display_annotation_at(this.video.currentTime, false);
+        } else if (op.type === "delete") {
+        } else if (op.type === "update") {
+        }
+    };
+
+    VideoController.prototype.get_next_anno = function (from) {
+        var res = null;
+        for (var i = 0; i < this.annotations.length; i++) {
+            if (this.annotations[i].time > from) {
+                res = this.annotations[i];
+                break;
+            }
+        }
+        return res;
     };
 
     VideoController.prototype.play_pause = function () {
@@ -155,7 +171,7 @@ var VideoController = (function () {
         var res = null;
 
         var dist = 10000000;
-        this.svg_docs.forEach(function (anno) {
+        this.annotations.forEach(function (anno) {
             var currDist = Math.abs(anno.time - time);
             if (currDist < dist && threshold >= currDist) {
                 dist = currDist;
@@ -167,6 +183,7 @@ var VideoController = (function () {
     };
 
     VideoController.prototype.display_annotation_at = function (time, temporal, threshold) {
+        if (typeof time === "undefined") { time = this.video.currentTime; }
         if (typeof temporal === "undefined") { temporal = true; }
         if (typeof threshold === "undefined") { threshold = 0.25; }
         var _this = this;
@@ -179,7 +196,14 @@ var VideoController = (function () {
         this.canvas.off('object:added');
         if (res.doc instanceof Array) {
             res.doc.forEach(function (a) {
-                _this.canvas.add(a);
+                try  {
+                    /*fabric.util.enlivenObjects([a], (objects)=> {
+                    
+                    });*/
+                    _this.canvas.add(a);
+                } catch (e) {
+                    console.log(e);
+                }
             });
         } else
             this.canvas.add(res.doc);
@@ -199,9 +223,6 @@ var VideoController = (function () {
         return res;
     };
 
-    VideoController.prototype.apply_op = function (op) {
-    };
-
     VideoController.prototype.start_video_observer = function () {
         var _this = this;
         window.setInterval(function () {
@@ -218,8 +239,8 @@ var VideoController = (function () {
             this.video.play();
             }, 3000);
             }*/
-            if (!_this.video.paused)
-                _this.display_annotation_at(_this.video.currentTime);
+            // if(!this.video.paused)
+            _this.display_annotation_at(_this.video.currentTime, !_this.video.paused);
 
             var intent = {
                 "component": "",
@@ -257,21 +278,23 @@ function router(intent) {
                 videoCtr.play_pause();
             videoCtr.video.currentTime = parseFloat(intent.extras.time);
             videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
-            console.log('coll', collab);
+
             break;
         case 'TOGGLE':
             videoCtr.toggle();
             break;
 
         case 'COLL_WRITE':
-            console.log('collab intent', intent);
+            //console.log('collab intent', intent);
             if (intent.sender.indexOf("@") > -1) {
                 var len = intent.extras.names.length;
                 var i;
                 for (i = 0; i < len; i++) {
                     var toApply = collab.ote.remoteEvent(parseInt(new Date().getTime(), 10), intent.extras.names[i]);
                     if (toApply) {
-                        //update_pad(toApply);
+                        console.log('collab toApplay', toApply);
+                        videoCtr.applyOp(toApply);
+                        console.log(videoCtr.annotations);
                     } else {
                         console.error("Couldn't apply remote Event!!!!");
                     }

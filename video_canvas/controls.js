@@ -1,4 +1,4 @@
-/// <reference path="definitions/angularjs.d.ts" />
+﻿/// <reference path="definitions/angularjs.d.ts" />
 /// <reference path="definitions/jquery.d.ts" />
 var VideoInstructionsCtrl = (function () {
     function VideoInstructionsCtrl() {
@@ -6,7 +6,7 @@ var VideoInstructionsCtrl = (function () {
         this.playing = false;
         this.video_time = 0;
         this.duration = 1;
-        this.annotated_times = [5];
+        this.annotated_times = [];
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
         this.jSlider.slider();
@@ -37,6 +37,9 @@ var VideoInstructionsCtrl = (function () {
 
     VideoInstructionsCtrl.prototype.add_annotation_time = function (anno) {
         this.annotated_times.push(anno);
+        this.annotated_times.sort(function (a, b) {
+            return a - b;
+        });
         this.update_markers();
     };
 
@@ -55,6 +58,16 @@ var VideoInstructionsCtrl = (function () {
         if (iwc.util.validateIntent(intent)) {
             console.log('toggle intent ');
             iwcClient.publish(intent);
+        }
+    };
+
+    VideoInstructionsCtrl.prototype.goto_next_anno = function (from) {
+        if (typeof from === "undefined") { from = this.video_time; }
+        for (var i = 0; i < this.annotated_times.length; i++) {
+            if (this.annotated_times[i] > from) {
+                this.set_video_time(this.annotated_times[i]);
+                break;
+            }
         }
     };
 

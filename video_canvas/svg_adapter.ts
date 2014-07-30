@@ -26,11 +26,11 @@ class Adapter {
         });
 
         this.canvas.on("object:removed", (a) => {
-            jQuery('#'+a.id).remove();
+            //jQuery('#'+a.id).remove();
         });
         
         this.canvas.on("object:moving", (a) => {
-            var s = Snap('#' + a.target.id);
+            /*var s = Snap('#' + a.target.id);
             //console.log('moved object', s);
             var myMatrix = new Snap.Matrix();
             var difX = 0, difY = 0;
@@ -45,11 +45,11 @@ class Adapter {
 
             myMatrix.scale(a.target.scaleX, a.target.scaleY, -difX, -difY);
 
-            s.transform(myMatrix);
+            s.transform(myMatrix);*/
         });
 
         this.canvas.on("object:scaling", (a) => {
-            var s = Snap('#' + a.target.id);
+            /*var s = Snap('#' + a.target.id);
             console.log('scaled object', a.target);
             var myMatrix = new Snap.Matrix();
             var difX = 0, difY = 0;
@@ -61,18 +61,18 @@ class Adapter {
             myMatrix.translate(a.target.left + difX, a.target.top + difY);
             myMatrix.rotate(a.target.angle);
             myMatrix.scale(a.target.scaleX, a.target.scaleY, -difX, -difY);
-            s.transform(myMatrix);
+            s.transform(myMatrix);*/
 
         });
 
         this.canvas.on("object:rotating", (a) => {
-            var s = Snap('#' + a.target.id);
+            /*var s = Snap('#' + a.target.id);
             console.log('rotated object', a.target);
             var myMatrix = new Snap.Matrix();
             myMatrix.translate(a.target.left, a.target.top);
             myMatrix.rotate(a.target.angle);
             myMatrix.scale(a.target.scaleX, a.target.scaleY);
-            s.transform(myMatrix);
+            s.transform(myMatrix);*/
            
         });
 
@@ -97,11 +97,13 @@ class Adapter {
     public on_object_added(a) {
         var object = a.target;
         //console.log('object:added', object);
-        a.target.id = this.make_id();
+        object.id = this.make_id();
         //console.log('hier is was', this.on_annotation);
-        console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-        this.on_annotation(this.canvas.getObjects());
-        console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2');
+        //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+        //this.on_annotation(this.canvas.getObjects());
+        this.on_annotation(object);
+
+        //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2');
         var svg = object.toSVG();
         //console.log($(svg).attr('id','joman'));
         this.svg.append($(svg).attr('id', this.make_id()));

@@ -8,7 +8,7 @@ class VideoInstructionsCtrl {
     public video_time = 0;
     public duration = 1;
     public jSlider: any;
-    private annotated_times: number[] = [5];
+    private annotated_times: number[] = [];
     constructor() {
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
@@ -38,6 +38,7 @@ class VideoInstructionsCtrl {
 
     public add_annotation_time(anno) {
         this.annotated_times.push(anno);
+        this.annotated_times.sort((a, b)=>{return a - b;});
         this.update_markers();
     }
 
@@ -59,6 +60,19 @@ class VideoInstructionsCtrl {
             iwcClient.publish(intent);
         }
     }
+
+    public goto_next_anno(from = this.video_time):void {
+        
+        for (var i = 0; i < this.annotated_times.length; i++) {
+            if (this.annotated_times[i] > from) {
+                this.set_video_time(this.annotated_times[i]);
+                break;
+            }
+        }
+        
+        
+    }
+
 
     public update_markers() {
         var max = this.jSlider.slider("option", "max");

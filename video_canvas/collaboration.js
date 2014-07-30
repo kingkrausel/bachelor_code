@@ -6,7 +6,8 @@ require([
     //collab = new Collaboration();
     console.log('collab OTEngine', OTEngine);
     OTENGINE = OTEngine;
-    collab = new Collaboration(42);
+    var id = Math.random() > 0.5 ? 1 : 2;
+    collab = new Collaboration(id);
     //collab.ote = new OTEngine(collab.jid_map[collab.user.uri]);
 });
 
@@ -29,13 +30,14 @@ var Collaboration = (function () {
         // in a very short time period (see Dominik Renzels IWC Paint Widget)
         this.actionbuffer = [];
         this.actionbuffermaxlength = 2;
-        this.actionbufferflushdelay = 1050;
+        this.actionbufferflushdelay = 200;
         this.saveTextDelay = 10000;
         this.saveTime = 0;
         this.shouldPurge = false;
         this.shouldSync = false;
-        this.ote = new OTENGINE(43);
-        this.syncTimer = setInterval(this.engineSyncOutbound, this.SYNC_INTERVAL);
+        this.ote = new OTENGINE(id);
+
+        //this.syncTimer = setInterval(this.engineSyncOutbound, this.SYNC_INTERVAL);
         this.purgeTimer = setInterval(this.onPurgeEngine, this.PURGE_INTERVAL);
 
         this.start_collaboration();
@@ -155,6 +157,8 @@ var Collaboration = (function () {
                 }
             };
 
+            console.log('collab send intents', intents);
+
             this.sendIntent(intents);
         }
     };
@@ -165,7 +169,7 @@ var Collaboration = (function () {
         } else {
             alert("Intent not valid!");
         }
-        console.log('collab sent intents');
+        // console.log('collab sent intents');
     };
 
     Collaboration.prototype.engineSyncOutbound = function () {

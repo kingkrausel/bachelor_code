@@ -14,14 +14,15 @@ class VideoController {
     public last_video_time = 0;
     public duration: number;
     public canvas: fabric.ICanvas; 
-    public svg_docs = [];
+    public annotations = [];
     public svg_adapter: Adapter;
     /////public isPlaying: boolean = false;
     constructor(id='video_player') {   
         this.video = <HTMLVideoElement>document.getElementById(id);
         this.start_video_observer();
-        console.log('Collaboration:',collab);
+        //console.log('Collaboration:',collab);
 
+       
 
         $(this.video).bind("durationchange", ()=> {
             this.duration = this.video.duration;
@@ -52,47 +53,18 @@ class VideoController {
         this.canvas.setHeight(480);
         this.canvas.setWidth(640);
         this.svg_adapter = new Adapter(this.canvas);
-        /*this.svg_adapter.register_annotation_event((jup:any)=> {
-            console.log('doc:',jup);
-            var intent = {
-                            "component": "",
-                            "sender": "",
-                            "data": "",
-                            "dataType": "text/xml",
-                            "action": "NEW_ANNOTATION",
-                            "categories": [],
-                            "flags": ["PUBLISH_LOCAL"],
-                            "extras": { "time": videoCtr.video.currentTime }
-            };
-            videoCtr.svg_docs.push({ time: videoCtr.video.currentTime, doc: jup });
-            console.log(videoCtr.svg_docs);
-                        if (iwc.util.validateIntent(intent)) {
-                            iwcClient.publish(intent);
-                        }
-        });*/
+        
         this.svg_adapter.register_annotation_event(this.on_object_added);
 
-        jQuery('.canvas-container').css({ 'position': 'absolute' });
-        console.log(fabric.loadSVGFromString);
-
-        /*document.getElementById('c').addEventListener('keydown', function (e) {
-            if (e.keyCode == 46)
-                this.canvas.remove(this.canvas.getActiveObject());
-        }, false);*/
-        /*fabric.loadSVGFromString(XML_TEST, (objects, options) => {
-            console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-            this.canvas.add(objects[0]);
-        });*/
-
-        //fabric.loadSVGFromString(XML_TEST, (a, b) => { console.log('Denis Golovin');});
-       
+        jQuery('.canvas-container').css({ 'position': 'absolute' });        
         
 
          fabric.loadSVGFromURL("http://golovin.de/ba/video_canvas/svg/1.svg", (objects, options) => {
              //this.canvas.add(objects[0]);
-             this.svg_docs.push({ doc: objects[0], time: 5.0 });
+             //this.annotations.push({ doc: objects[0], time: 5.0 });
              //this.svg_docs[5.0] = objects[0];
              //console.log(this.svg_docs);
+             this.update_anno({ doc: objects[0], time: 5.0 });
         });
         
     }
@@ -104,31 +76,22 @@ class VideoController {
         
     }
 
-    public on_object_added(object: any) {
-        //
-        //console.log('object added jo!', videoCtr.svg_docs);
+    public on_object_added(object: fabric.IObject) {
+        
         var time = parseFloat(videoCtr.video.currentTime.toFixed(2));
-        var result = videoCtr.annotation_at(time);//jQuery.grep(videoCtr.svg_docs, function (e) { return e.time == time; });
-        
-        
-        console.log('result', result);
-        if (!result)
-            videoCtr.svg_docs.push({ time: time, doc: jQuery.extend(true, [], object) });
-        else {
-            result.doc = jQuery.extend(true, [], object); //clone
-            time = result.time; // so no new (visible) marker is created
-        } 
+        videoCtr.update_anno({time:time, doc: object});
 
-        console.log(videoCtr.svg_docs); 
+        console.log('json fabric',object.toJSON(null)); 
 
         var layer = 0;
+        //if (object instanceof Array) console.error('warum ist das ein array??');
         var anno = { time: time, doc: object };
         var op = collab.ote.createOp("change", anno, "insert", layer); //TODO: specify correct layer
         collab.sendOp(collab.ote.localEvent(op));
        
         if (collab.t === 0) {
             
-            collab.t = setTimeout(collab.flush_actions, collab.actionbufferflushdelay);
+            collab.t = setTimeout(() => { collab.flush_actions(); }, collab.actionbufferflushdelay);
         }
 
         // if buffer length exceeds maximum, flush buffer.
@@ -136,20 +99,75 @@ class VideoController {
             collab.flush_actions();
         }
 
-        var intent = {
-            "component": "",
-            "sender": "",
-            "data": "",
-            "dataType": "text/xml",
-            "action": "NEW_ANNOTATION",
-            "categories": [],
-            "flags": ["PUBLISH_LOCAL"],
-            "extras": { "time": time }
-        };
-        if (iwc.util.validateIntent(intent)) {
-            iwcClient.publish(intent);
+       
+    }
+
+    public update_anno(anno: any) {
+        var curr_anno = this.annotation_at(anno.time); //get 'near' annotation if any
+        if (!curr_anno) {
+            var intent = {
+                "component": "",
+                "sender": "",
+                "data": "",
+                "dataType": "text/xml",
+                "action": "NEW_ANNOTATION",
+                "categories": [],
+                "flags": ["PUBLISH_LOCAL"],
+                "extras": { "time": anno.time }
+            };
+            if (iwc.util.validateIntent(intent)) {
+                iwcClient.publish(intent);
+            }
+        }
+
+        if (anno.doc instanceof fabric.Path) {
+           
+            if (!curr_anno){
+                this.annotations.push({ time: anno.time, doc: [jQuery.extend(true, {}, anno.doc)] });
+                       
+            }
+            else {
+                curr_anno.doc.push(jQuery.extend(true, {}, anno.doc)); //cloning is important, since objs get destroyed if not displayed                            
+            } 
+        }
+        else
+        fabric.util.enlivenObjects([anno.doc], (objects) => {
+            anno.doc = objects[0];
+            //this.canvas.add(objects[0]);
+            var curr_anno = this.annotation_at(anno.time); //get 'near' annotation if any
+            if (!curr_anno)
+                this.annotations.push({ time: anno.time, doc: [jQuery.extend(true, {}, anno.doc)] });
+            else {
+                curr_anno.doc.push(jQuery.extend(true, {}, anno.doc)); //cloning is important, since objs get destroyed if not displayed            
+            }       
+        });
+
+        this.annotations.sort((a, b) => { return a.time - b.time; });
+    }
+
+    public applyOp(op:any) {
+        if (op.type === "insert") {
+            this.update_anno(op.value);
+            this.display_annotation_at(this.video.currentTime, false); 
+        } else if (op.type === "delete") {
+
+        } else if (op.type === "update") {
+
         }
     }
+
+    public get_next_anno(from: number) {
+        var res = null;
+        for (var i = 0; i < this.annotations.length; i++) {
+            if (this.annotations[i].time > from) {
+                res = this.annotations[i];
+                break;
+            }
+        }
+        return res;         
+    }
+
+
 
     public play_pause() {
         //this.video = VIDEO;
@@ -170,7 +188,7 @@ class VideoController {
         var res = null;
 
         var dist = 10000000; //works for videos with duration <= 2777h
-        this.svg_docs.forEach((anno) => {
+        this.annotations.forEach((anno) => {
             var currDist = Math.abs(anno.time - time);
             if (currDist < dist && threshold >= currDist) {
                 dist = currDist;
@@ -181,7 +199,7 @@ class VideoController {
         return res;
     }
 
-    public display_annotation_at(time:number, temporal = true, threshold = 0.25) {
+    public display_annotation_at(time = this.video.currentTime, temporal = true, threshold = 0.25) {
 
         var res = this.annotation_at(time);
         this.canvas.clear();
@@ -191,7 +209,15 @@ class VideoController {
             this.canvas.off('object:added');
             if (res.doc instanceof Array) {
                 res.doc.forEach((a) => {
-                    this.canvas.add(a);
+                    try {
+                        /*fabric.util.enlivenObjects([a], (objects)=> {
+                            
+                        });*/
+                        this.canvas.add(a);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
                 });
             }
             else
@@ -209,14 +235,12 @@ class VideoController {
         return res;
     }
 
-    public apply_op(op) {
-
-    }
+    
 
     private start_video_observer() {
         window.setInterval(() => {
             if (this.last_video_time == this.video.currentTime) return;
-
+            
 
             /*if (this.last_video_time < this.svg_docs[0].time
                 && this.svg_docs[0].time <= this.video.currentTime
@@ -228,8 +252,8 @@ class VideoController {
                         this.video.play();
                     }, 3000);
             }*/
-            if(!this.video.paused)
-                this.display_annotation_at(this.video.currentTime);
+           // if(!this.video.paused)
+            this.display_annotation_at(this.video.currentTime, !this.video.paused);
            
             var intent = {
                 "component": "",
@@ -269,14 +293,14 @@ function router(intent) {
             if (!videoCtr.video.paused) videoCtr.play_pause();
             videoCtr.video.currentTime = parseFloat(intent.extras.time);
             videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
-            console.log('coll',collab);
+            
             break;
         case 'TOGGLE':
             videoCtr.toggle();            
             break;
 
         case 'COLL_WRITE':
-            console.log('collab intent', intent);
+            //console.log('collab intent', intent);
             if (intent.sender.indexOf("@") > - 1) {
                 var len = intent.extras.names.length;
                 var i;
@@ -286,7 +310,9 @@ function router(intent) {
                         , intent.extras.names[i]						// data  
                         );
                     if (toApply) {
-                        //update_pad(toApply);
+                        console.log('collab toApplay',toApply);
+                        videoCtr.applyOp(toApply);
+                        console.log(videoCtr.annotations);
                     } else {
                         console.error("Couldn't apply remote Event!!!!");
                     }

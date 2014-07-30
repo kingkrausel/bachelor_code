@@ -20,8 +20,28 @@
     <Content Include="app.css" />
     <TypeScriptCompile Include="controls.ts" />
     <TypeScriptCompile Include="definitions\angularjs.d.ts" />
+    <TypeScriptCompile Include="collaboration.ts" />
+    <Content Include="config.js" />
     <Content Include="controls.css" />
     <TypeScriptCompile Include="svg_adapter.ts" />
+    <Content Include="OpenCoweb-jsoe\config_OUT.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\ContextDifference.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\ContextVector.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\ContextVectorTable.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\DeleteOperation.js" />
+    <Content Include="OpenCoweb-jsoe\editor.xml" />
+    <Content Include="OpenCoweb-jsoe\jsoe\factory.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\HistoryBuffer.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\InsertOperation.js" />
+    <Content Include="OpenCoweb-jsoe\main_OUT.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\nls\messages.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\Operation.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\OperationEngine.js" />
+    <Content Include="OpenCoweb-jsoe\org\requirejs\i18n.js" />
+    <Content Include="OpenCoweb-jsoe\jsoe\OTEngine.js" />
+    <Content Include="OpenCoweb-jsoe\savedText.xml" />
+    <Content Include="OpenCoweb-jsoe\jsoe\UpdateOperation.js" />
+    <Content Include="svg\1.svg" />
     <Content Include="video.htm" />
     <TypeScriptCompile Include="definitions\fabricjs.d.ts" />
     <Content Include="definitions\jquery.d.ts" />
@@ -39,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="snap.svg-min.js" />
+    <Content Include="OpenCoweb-jsoe\README.md" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
