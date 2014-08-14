@@ -1,3 +1,5 @@
+/// <reference path="definitions/fabricjs.d.ts" />
+
 var OTENGINE;
 
 require([
@@ -53,6 +55,19 @@ var Collaboration = (function () {
         
         });*/
     }
+    Collaboration.prototype.prepareForYatta = function (elem) {
+        var res = JSON.stringify(elem);
+        res = JSON.parse(res);
+        for (var key in res) {
+            if (res[key] != null && typeof res[key] !== 'string') {
+                res[key] = JSON.stringify(res[key]);
+            }
+        }
+        console.log('collab prepareForYatta:', res);
+
+        return res;
+    };
+
     /**
     Initialize:
     *the current user,

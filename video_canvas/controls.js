@@ -1,4 +1,4 @@
-﻿/// <reference path="definitions/angularjs.d.ts" />
+/// <reference path="definitions/angularjs.d.ts" />
 /// <reference path="definitions/jquery.d.ts" />
 var VideoInstructionsCtrl = (function () {
     function VideoInstructionsCtrl() {

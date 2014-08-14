@@ -6,3 +6,12 @@
     position:absolute;
     top:0;
 }
+
+.ui-slider-tick-mark:hover{
+    display:inline-block;
+    width:2px;
+    background:red;
+    height:23px;
+    position:absolute;
+    top:0;
+}

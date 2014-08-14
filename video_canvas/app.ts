@@ -6,7 +6,7 @@
 
 
 var XML_TEST = '<svg height="100" width="100">< circle cx = "50" cy = "50" r = "40" stroke = "black" stroke-width = "3" fill ="red" /></svg>'
-declare var iwc: any, iwcClient:any, collab;
+declare var iwc: any, iwcClient:any, collab: Collaboration, yatta:any;
 
 
 class VideoController {
@@ -21,11 +21,27 @@ class VideoController {
         this.video = <HTMLVideoElement>document.getElementById(id);
         this.start_video_observer();
         //console.log('Collaboration:',collab);
+        //console.log('golo video', this.video.duration);
+        //this.video.onloadstart = () => { console.log('golo dur', this.video.duration);};
 
-       
+        this.duration = isNaN(this.video.duration) ? 0 : this.video.duration;
+        var intent = {
+            "component": "",
+            "sender": "",
+            "data": "",
+            "dataType": "text/xml",
+            "action": "UPDATE_VIDEO_DURATION",
+            "categories": [],
+            "flags": ["PUBLISH_LOCAL"],
+            "extras": { "duration": this.duration.toString() }
+        };
 
-        $(this.video).bind("durationchange", ()=> {
-            this.duration = this.video.duration;
+        if (iwc.util.validateIntent(intent)) {
+            iwcClient.publish(intent);
+        }
+        
+        $(this.video).on("durationchange", ()=> {
+            this.duration = this.video.duration;           
             var dur = this.duration;
             var intent = {
                 "component": "",
@@ -77,15 +93,23 @@ class VideoController {
     }
 
     public on_object_added(object: fabric.IObject) {
+
+
         
         var time = parseFloat(videoCtr.video.currentTime.toFixed(2));
         videoCtr.update_anno({time:time, doc: object});
-
+        
         console.log('json fabric',object.toJSON(null)); 
 
         var layer = 0;
         //if (object instanceof Array) console.error('warum ist das ein array??');
-        var anno = { time: time, doc: object };
+
+        /* var prepDoc = collab.prepareForYatta(object);
+        var anno = { time: time, doc: prepDoc };
+        yatta.val(Math.random().toString() + "stuff", anno, "immutable");  
+*/
+
+       var anno = { time: time, doc: object };
         var op = collab.ote.createOp("change", anno, "insert", layer); //TODO: specify correct layer
         collab.sendOp(collab.ote.localEvent(op));
        
@@ -98,6 +122,9 @@ class VideoController {
         if (collab.actionbuffer.length >= collab.actionbuffermaxlength) {
             collab.flush_actions();
         }
+
+        
+         
 
        
     }
@@ -306,7 +333,7 @@ function router(intent) {
                 var i;
                 for (i = 0; i < len; i++) {
                     var toApply = collab.ote.remoteEvent(
-                        parseInt(new Date().getTime(), 10)	// order 
+                        new Date().getTime()	// order 
                         , intent.extras.names[i]						// data  
                         );
                     if (toApply) {

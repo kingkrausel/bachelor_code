@@ -24,13 +24,23 @@
     
 <link href="http://golovin.de/ba/video_canvas/app.css" rel="stylesheet" />
     
-    <script src ="http://dbis.rwth-aachen.de/gadgets/iwc/lib/iwc.js"> </script >
+     <script src="http://open-app.googlecode.com/files/openapp.js"></script>
+  <script src ="http://dbis.rwth-aachen.de/gadgets/iwc/lib/iwc.js"> </script >
     
     <script type="text/javascript" src="http://golovin.de/ba/video_canvas/config.js"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/dojo.js"></script>
+ 
+  
+   <!-- <script src="http://golovin.de/ba/video_canvas/yatta/dest/browser/Widgets/libs/DUIClient.js"></script>
+   <script src="http://golovin.de/ba/video_canvas/yatta/build/browser/DUIClient.js"></script>
+  <script src="http://golovin.de/ba/video_canvas/yatta/build/browser/Frameworks/JsonYatta.min.js"></script>
+  <script src="http://golovin.de/ba/video_canvas/yatta/build/browser/Connectors/IwcConnector.js"></script> -->
+  
 	<script type="text/javascript" src="http://golovin.de/ba/video_canvas/collaboration.js"></script>
 
-  <script src="http://open-app.googlecode.com/files/openapp.js"></script>
+  
+  
+
     
     <script type ="application/javascript">
       var iwcClient ;
@@ -50,7 +60,14 @@
     <script> 
     $(function(){
       $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm"); 
-	  console.log('jup!!');
+	   /* var id = Math.ceil(Math.random() * 10000000);
+      window.createConnector(function(Connector, id){
+        console.log("initializing..");        
+        yatta = new window.JsonYatta(id, Connector);
+        yatta.setMutableDefault('immutable');
+        //yatta.val('root', 'jup');
+
+      });*/
     });
     </script> 
   </head> 

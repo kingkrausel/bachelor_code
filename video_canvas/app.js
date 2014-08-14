@@ -15,7 +15,25 @@ var VideoController = (function () {
         this.start_video_observer();
 
         //console.log('Collaboration:',collab);
-        $(this.video).bind("durationchange", function () {
+        //console.log('golo video', this.video.duration);
+        //this.video.onloadstart = () => { console.log('golo dur', this.video.duration);};
+        this.duration = isNaN(this.video.duration) ? 0 : this.video.duration;
+        var intent = {
+            "component": "",
+            "sender": "",
+            "data": "",
+            "dataType": "text/xml",
+            "action": "UPDATE_VIDEO_DURATION",
+            "categories": [],
+            "flags": ["PUBLISH_LOCAL"],
+            "extras": { "duration": this.duration.toString() }
+        };
+
+        if (iwc.util.validateIntent(intent)) {
+            iwcClient.publish(intent);
+        }
+
+        $(this.video).on("durationchange", function () {
             _this.duration = _this.video.duration;
             var dur = _this.duration;
             var intent = {
@@ -72,6 +90,10 @@ var VideoController = (function () {
         var layer = 0;
 
         //if (object instanceof Array) console.error('warum ist das ein array??');
+        /* var prepDoc = collab.prepareForYatta(object);
+        var anno = { time: time, doc: prepDoc };
+        yatta.val(Math.random().toString() + "stuff", anno, "immutable");
+        */
         var anno = { time: time, doc: object };
         var op = collab.ote.createOp("change", anno, "insert", layer);
         collab.sendOp(collab.ote.localEvent(op));
@@ -290,7 +312,7 @@ function router(intent) {
                 var len = intent.extras.names.length;
                 var i;
                 for (i = 0; i < len; i++) {
-                    var toApply = collab.ote.remoteEvent(parseInt(new Date().getTime(), 10), intent.extras.names[i]);
+                    var toApply = collab.ote.remoteEvent(new Date().getTime(), intent.extras.names[i]);
                     if (toApply) {
                         console.log('collab toApplay', toApply);
                         videoCtr.applyOp(toApply);

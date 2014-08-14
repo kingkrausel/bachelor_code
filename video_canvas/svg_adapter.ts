@@ -73,6 +73,7 @@ class Adapter {
             myMatrix.rotate(a.target.angle);
             myMatrix.scale(a.target.scaleX, a.target.scaleY);
             s.transform(myMatrix);*/
+            
            
         });
 

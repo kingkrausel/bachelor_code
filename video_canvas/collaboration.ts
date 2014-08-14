@@ -1,3 +1,4 @@
+/// <reference path="definitions/fabricjs.d.ts" />
 declare var require, openapp;
 
 var OTENGINE;
@@ -62,13 +63,15 @@ class Collaboration {
     public syncTimer;
     public purgeTimer;
 
+    public graphicalElementsContainer: any;
+
     constructor(id) {
         this.ote = new OTENGINE(id);
         //this.syncTimer = setInterval(this.engineSyncOutbound, this.SYNC_INTERVAL);
         this.purgeTimer = setInterval(this.onPurgeEngine, this.PURGE_INTERVAL);
 
         this.start_collaboration();
-        this.actionbuffer = [];
+        this.actionbuffer = [];        
 
         /*openapp.resource.get(openapp.param.space(), (s) => {
             this.context = s;
@@ -80,6 +83,20 @@ class Collaboration {
             });
 
         });*/
+    }
+
+    public prepareForYatta(elem: fabric.IObject) {
+        var res = <any>JSON.stringify(elem);
+        res = JSON.parse(res);
+        for (var key in res) {
+
+            if (res[key] != null && typeof res[key] !== 'string') {
+                res[key] = JSON.stringify( res[key]);
+            }            
+        }
+        console.log('collab prepareForYatta:', res);
+
+        return res;
     }
 
 /**
