@@ -90,24 +90,24 @@ var VideoController = (function () {
         var layer = 0;
 
         //if (object instanceof Array) console.error('warum ist das ein array??');
-        /* var prepDoc = collab.prepareForYatta(object);
+        var prepDoc = collab.prepareForYatta(object);
         var anno = { time: time, doc: prepDoc };
         yatta.val(Math.random().toString() + "stuff", anno, "immutable");
-        */
-        var anno = { time: time, doc: object };
-        var op = collab.ote.createOp("change", anno, "insert", layer);
+        /* var anno = { time: time, doc: object };
+        var op = collab.ote.createOp("change", anno, "insert", layer); //TODO: specify correct layer
         collab.sendOp(collab.ote.localEvent(op));
-
+        
         if (collab.t === 0) {
-            collab.t = setTimeout(function () {
-                collab.flush_actions();
-            }, collab.actionbufferflushdelay);
+        
+        collab.t = setTimeout(() => { collab.flush_actions(); }, collab.actionbufferflushdelay);
         }
-
+        
         // if buffer length exceeds maximum, flush buffer.
         if (collab.actionbuffer.length >= collab.actionbuffermaxlength) {
-            collab.flush_actions();
+        collab.flush_actions();
         }
+        
+        */
     };
 
     VideoController.prototype.update_anno = function (anno) {

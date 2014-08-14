@@ -104,12 +104,11 @@ class VideoController {
         var layer = 0;
         //if (object instanceof Array) console.error('warum ist das ein array??');
 
-        /* var prepDoc = collab.prepareForYatta(object);
+         var prepDoc = collab.prepareForYatta(object);
         var anno = { time: time, doc: prepDoc };
         yatta.val(Math.random().toString() + "stuff", anno, "immutable");  
-*/
 
-       var anno = { time: time, doc: object };
+      /* var anno = { time: time, doc: object };
         var op = collab.ote.createOp("change", anno, "insert", layer); //TODO: specify correct layer
         collab.sendOp(collab.ote.localEvent(op));
        
@@ -123,7 +122,8 @@ class VideoController {
             collab.flush_actions();
         }
 
-        
+        */
+
          
 
        
