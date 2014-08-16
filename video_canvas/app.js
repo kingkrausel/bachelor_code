@@ -90,10 +90,31 @@ var VideoController = (function () {
         var layer = 0;
 
         //if (object instanceof Array) console.error('warum ist das ein array??');
-        /* var prepDoc = collab.prepareForYatta(object);
-        var anno = { time: time, doc: prepDoc };
-        yatta.val(Math.random().toString() + "stuff", anno, "immutable");
-        */
+        var anno = { time: time, doc: object };
+        var op = collab.ote.createOp("change", anno, "insert", layer);
+        collab.sendOp(collab.ote.localEvent(op));
+
+        if (collab.t === 0) {
+            collab.t = setTimeout(function () {
+                collab.flush_actions();
+            }, collab.actionbufferflushdelay);
+        }
+
+        // if buffer length exceeds maximum, flush buffer.
+        if (collab.actionbuffer.length >= collab.actionbuffermaxlength) {
+            collab.flush_actions();
+        }
+    };
+
+    VideoController.prototype.on_object_changed = function (object) {
+        var time = parseFloat(videoCtr.video.currentTime.toFixed(2));
+        videoCtr.update_anno({ time: time, doc: object });
+
+        console.log('json fabric', object.toJSON(null));
+
+        var layer = 0;
+
+        //if (object instanceof Array) console.error('warum ist das ein array??');
         var anno = { time: time, doc: object };
         var op = collab.ote.createOp("change", anno, "insert", layer);
         collab.sendOp(collab.ote.localEvent(op));
@@ -248,6 +269,10 @@ var VideoController = (function () {
     VideoController.prototype.start_video_observer = function () {
         var _this = this;
         window.setInterval(function () {
+            if (networkCtrl.isMaster)
+                jQuery('#master').text('Master');
+            else
+                jQuery('#master').text();
             if (_this.last_video_time == _this.video.currentTime)
                 return;
 
@@ -324,6 +349,8 @@ function router(intent) {
             }
             break;
     }
+
+    routerNetwork(intent);
 }
 
 iwcClient.connect(router);

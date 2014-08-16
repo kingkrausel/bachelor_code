@@ -93,8 +93,6 @@ class VideoController {
     }
 
     public on_object_added(object: fabric.IObject) {
-
-
         
         var time = parseFloat(videoCtr.video.currentTime.toFixed(2));
         videoCtr.update_anno({time:time, doc: object});
@@ -104,10 +102,6 @@ class VideoController {
         var layer = 0;
         //if (object instanceof Array) console.error('warum ist das ein array??');
 
-        /* var prepDoc = collab.prepareForYatta(object);
-        var anno = { time: time, doc: prepDoc };
-        yatta.val(Math.random().toString() + "stuff", anno, "immutable");  
-*/
 
        var anno = { time: time, doc: object };
         var op = collab.ote.createOp("change", anno, "insert", layer); //TODO: specify correct layer
@@ -121,12 +115,33 @@ class VideoController {
         // if buffer length exceeds maximum, flush buffer.
         if (collab.actionbuffer.length >= collab.actionbuffermaxlength) {
             collab.flush_actions();
+        }  
+    }
+
+    public on_object_changed(object: fabric.IObject) {
+
+        var time = parseFloat(videoCtr.video.currentTime.toFixed(2));
+        videoCtr.update_anno({ time: time, doc: object });
+
+        console.log('json fabric', object.toJSON(null));
+
+        var layer = 0;
+        //if (object instanceof Array) console.error('warum ist das ein array??');
+
+
+        var anno = { time: time, doc: object };
+        var op = collab.ote.createOp("change", anno, "insert", layer); //TODO: specify correct layer
+        collab.sendOp(collab.ote.localEvent(op));
+
+        if (collab.t === 0) {
+
+            collab.t = setTimeout(() => { collab.flush_actions(); }, collab.actionbufferflushdelay);
         }
 
-        
-         
-
-       
+        // if buffer length exceeds maximum, flush buffer.
+        if (collab.actionbuffer.length >= collab.actionbuffermaxlength) {
+            collab.flush_actions();
+        }
     }
 
     public update_anno(anno: any) {
@@ -266,6 +281,8 @@ class VideoController {
 
     private start_video_observer() {
         window.setInterval(() => {
+            if (networkCtrl.isMaster) jQuery('#master').text('Master');
+            else jQuery('#master').text();
             if (this.last_video_time == this.video.currentTime) return;
             
 
@@ -347,6 +364,8 @@ function router(intent) {
             }//*/
             break;            
     }
+
+    routerNetwork(intent);
 
 }
 

@@ -36,6 +36,7 @@
   <script src="http://golovin.de/ba/video_canvas/yatta/build/browser/Frameworks/JsonYatta.min.js"></script>
   <script src="http://golovin.de/ba/video_canvas/yatta/build/browser/Connectors/IwcConnector.js"></script> -->
   
+	
 	<script type="text/javascript" src="http://golovin.de/ba/video_canvas/collaboration.js"></script>
 
   
@@ -60,14 +61,7 @@
     <script> 
     $(function(){
       $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm"); 
-	   /* var id = Math.ceil(Math.random() * 10000000);
-      window.createConnector(function(Connector, id){
-        console.log("initializing..");        
-        yatta = new window.JsonYatta(id, Connector);
-        yatta.setMutableDefault('immutable');
-        //yatta.val('root', 'jup');
-
-      });*/
+	   
     });
     </script> 
   </head> 
