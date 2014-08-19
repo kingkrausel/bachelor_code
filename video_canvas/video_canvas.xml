@@ -33,8 +33,8 @@
   
    <!-- <script src="http://golovin.de/ba/video_canvas/yatta/dest/browser/Widgets/libs/DUIClient.js"></script> -->
   <script src="http://dbis.rwth-aachen.de/~jahns/role-widgets/widgetbundles/libraries/DUIClient.js"></script>
-<script src="http://golovin.de/ba/video_canvas/yatta/build/browser/Frameworks/JsonYatta.min.js"></script>
-  <script src="http://golovin.de/ba/video_canvas/yatta/build/browser/Connectors/IwcConnector.js"></script>
+<script src="http://golovin.de/ba/yatta/build/browser/Frameworks/JsonYatta.min.js"></script>
+  <script src="http://golovin.de/ba/yatta/build/browser/Connectors/IwcConnector.js"></script>
   
 	<script type="text/javascript" src="http://golovin.de/ba/video_canvas/collaboration.js"></script>
 
@@ -51,6 +51,15 @@
       console.log ( intent ) ;
       };
       //iwcClient.connect ( iwcCallback ) ;
+      
+       var user_id = Math.ceil(Math.random() * 10000000);
+     
+     Y.createIwcConnector(function(Connector, user_id){
+        yatta = new Y.JsonYatta(user_id, Connector);
+        console.log("initializing..");        
+        //yatta.setMutableDefault('immutable');
+
+      });
       }
       gadgets.util.registerOnLoadHandler ( init ) ;
     </script >
@@ -62,14 +71,7 @@
       $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm"); 
 	   /**/ 
      
-     var user_id = Math.ceil(Math.random() * 10000000);
-     
-     Y.createIwcConnector(function(Connector, user_id){
-        yatta = new Y.JsonYatta(user_id, Connector);
-        console.log("initializing..");        
-        //yatta.setMutableDefault('immutable');
-
-      });
+    
     });
     </script> 
   </head> 
