@@ -315,7 +315,6 @@ var videoCtr;
 videoCtr = new VideoController();
 
 function router(intent) {
-    console.log('VIDEO WINDOW RECEIVED AN INTENT!');
     switch (intent.action) {
         case 'PLAY/PAUSE':
             videoCtr.play_pause();

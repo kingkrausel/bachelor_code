@@ -283,8 +283,7 @@ class VideoController {
         window.setInterval(() => {
             if (networkCtrl.isMaster) jQuery('#master').text('Master');
             else jQuery('#master').text();
-            if (this.last_video_time == this.video.currentTime) return;
-            
+            if (this.last_video_time == this.video.currentTime) return;            
 
             /*if (this.last_video_time < this.svg_docs[0].time
                 && this.svg_docs[0].time <= this.video.currentTime
@@ -327,8 +326,6 @@ var videoCtr: VideoController;
 
 
 function router(intent) {
-
-    console.log('VIDEO WINDOW RECEIVED AN INTENT!');
     switch (intent.action) {
         case 'PLAY/PAUSE':
             videoCtr.play_pause();
@@ -364,7 +361,7 @@ function router(intent) {
             }//*/
             break;            
     }
-
+    
     routerNetwork(intent);
 
 }

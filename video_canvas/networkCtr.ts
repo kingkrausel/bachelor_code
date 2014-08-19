@@ -2,7 +2,7 @@ class NetworkController {
     public isMaster: boolean = false;
     public masterAbilityScore = 0;
     private masterAlive = false;
-    public masterPingTime = 10 * 1000; //Master pings every 10 secs to validate that he is alive
+    public masterPingTime = 3 * 1000; //Master pings every 10 secs to validate that he is alive
     public waitForMasterPing = this.masterPingTime * 2;
     private timerID = 0;
     public masterPingTimerID = 0;

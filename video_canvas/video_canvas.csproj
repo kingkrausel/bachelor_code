@@ -24,6 +24,7 @@
     <Content Include="config.js" />
     <Content Include="controls.css" />
     <TypeScriptCompile Include="svg_adapter.ts" />
+    <TypeScriptCompile Include="networkCtr.ts" />
     <Content Include="OpenCoweb-jsoe\config_OUT.js" />
     <Content Include="OpenCoweb-jsoe\jsoe\ContextDifference.js" />
     <Content Include="OpenCoweb-jsoe\jsoe\ContextVector.js" />
