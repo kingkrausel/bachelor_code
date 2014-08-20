@@ -366,7 +366,7 @@ declare module fabric {
         toDataURL(callback): string;
         toggle(property): IObject;
         toGrayscale(): IObject;
-        toJSON(propertiesToInclude): string;
+        toJSON(propertiesToInclude?:string[]): string;
         toObject(propertiesToInclude): any;
         tostring(): string;
         transform(ctx: CanvasRenderingContext2D);

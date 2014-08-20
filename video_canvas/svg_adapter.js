@@ -1,4 +1,4 @@
-/// <reference path="definitions/jquery.d.ts" />
+﻿/// <reference path="definitions/jquery.d.ts" />
 /// <reference path="definitions/fabricjs.d.ts" />
 var Adapter = (function () {
     function Adapter(canvas) {
@@ -16,6 +16,7 @@ var Adapter = (function () {
         });
 
         this.canvas.on("object:moving", function (a) {
+            _this.on_object_moved(a.target, "object:moving");
             /*var s = Snap('#' + a.target.id);
             //console.log('moved object', s);
             var myMatrix = new Snap.Matrix();

@@ -11,12 +11,16 @@ var VideoController = (function () {
         var _this = this;
         this.last_video_time = 0;
         this.annotations = [];
+        this.collabPeerIds = [];
+        this.fabricCounter = 0;
         this.video = document.getElementById(id);
         this.start_video_observer();
 
         //console.log('Collaboration:',collab);
         //console.log('golo video', this.video.duration);
         //this.video.onloadstart = () => { console.log('golo dur', this.video.duration);};
+        this.peerId = yatta.getUserId();
+        console.log('peer id:', this.peerId);
         this.duration = isNaN(this.video.duration) ? 0 : this.video.duration;
         var intent = {
             "component": "",
@@ -31,6 +35,7 @@ var VideoController = (function () {
 
         if (iwc.util.validateIntent(intent)) {
             iwcClient.publish(intent);
+            //yatta.getConnector().sendIwcIntent(intent);
         }
 
         $(this.video).on("durationchange", function () {
@@ -49,8 +54,27 @@ var VideoController = (function () {
 
             if (iwc.util.validateIntent(intent)) {
                 iwcClient.publish(intent);
+                //yatta.getConnector().sendIwcIntent(intent);
             }
         });
+
+        setTimeout(function () {
+            var intent2 = {
+                "component": "",
+                "sender": "",
+                "data": "",
+                "dataType": "text/xml",
+                "action": "REGISTER_MY_P2P_ID",
+                "categories": [],
+                "flags": ["PUBLISH_GLOBAL"],
+                "extras": { "peerId": _this.peerId }
+            };
+
+            if (iwc.util.validateIntent(intent2)) {
+                iwcClient.publish(intent2);
+                //yatta.getConnector().sendIwcIntent(intent);
+            }
+        }, 1000);
 
         //var canvas;
         //var VIDEO = <HTMLVideoElement>document.getElementById('video_player');
@@ -73,6 +97,33 @@ var VideoController = (function () {
             //console.log(this.svg_docs);
             _this.update_anno({ doc: objects[0], time: 5.0 });
         });
+
+        yatta.on('addProperty', function (e, prop) {
+            //
+            console.log('collab addProperty triggered', prop);
+            if (prop.indexOf(_this.peerId) === -1) {
+                setTimeout(function () {
+                    var anno = yatta.val(prop).val();
+                    anno.doc = collab.unpackFromYatta(anno.doc);
+                    console.log('collab received anno and unpacked', anno);
+                    _this.update_anno(anno);
+                    _this.display_annotation_at(_this.video.currentTime, false);
+                    Object.observe(yatta, function (changes) {
+                        changes.forEach(function (change) {
+                            // Letting us know what changed
+                            console.log('collab yatta changed', change.type, change.name, change.oldValue);
+                        });
+                    });
+                }, 1000);
+            }
+        });
+
+        yatta.on('change', function (e, prop) {
+            //
+            console.log('collab Property change was triggered', prop);
+        });
+
+        this.svg_adapter.on_object_moved = this.on_object_changed;
     }
     VideoController.prototype.set_video_time = function (time) {
         if (!this.video.paused)
@@ -82,17 +133,21 @@ var VideoController = (function () {
     };
 
     VideoController.prototype.on_object_added = function (object) {
+        var id = videoCtr.peerId + '_' + videoCtr.fabricCounter++;
+        object.set('collab_id', id);
+
         var time = parseFloat(videoCtr.video.currentTime.toFixed(2));
         videoCtr.update_anno({ time: time, doc: object });
-
-        console.log('json fabric', object.toJSON(null));
 
         var layer = 0;
 
         //if (object instanceof Array) console.error('warum ist das ein array??');
         var prepDoc = collab.prepareForYatta(object);
+        console.log('collab json fabric', prepDoc);
         var anno = { time: time, doc: prepDoc };
-        yatta.val(Math.random().toString() + "stuff", anno, "immutable");
+
+        yatta.val(id, anno, "immutable");
+        console.log('collab yatta added anno');
         /* var anno = { time: time, doc: object };
         var op = collab.ote.createOp("change", anno, "insert", layer); //TODO: specify correct layer
         collab.sendOp(collab.ote.localEvent(op));
@@ -110,8 +165,16 @@ var VideoController = (function () {
         */
     };
 
+    VideoController.prototype.on_object_changed = function (object, event) {
+        console.log('collab onchange (moving)', object);
+        var id = object.get('collab_id');
+        yatta.val(id).val('doc').val('left', object.left);
+        yatta.val(id).val('doc').val('top', object.top);
+    };
+
     VideoController.prototype.update_anno = function (anno) {
         var _this = this;
+        console.log('collab time', new Date().getTime());
         var curr_anno = this.annotation_at(anno.time);
         if (!curr_anno) {
             var intent = {
@@ -126,6 +189,7 @@ var VideoController = (function () {
             };
             if (iwc.util.validateIntent(intent)) {
                 iwcClient.publish(intent);
+                //yatta.getConnector().sendIwcIntent(intent);
             }
         }
 
@@ -245,6 +309,13 @@ var VideoController = (function () {
         return res;
     };
 
+    VideoController.prototype.registerPeerId = function (peerId) {
+        if (peerId === this.peerId)
+            return;
+        this.collabPeerIds.push(peerId);
+        yatta.connector.connectToPeer(peerId); //two way connection
+    };
+
     VideoController.prototype.start_video_observer = function () {
         var _this = this;
         window.setInterval(function () {
@@ -278,9 +349,19 @@ var VideoController = (function () {
             if (iwc.util.validateIntent(intent)) {
                 console.log('send time intent');
                 iwcClient.publish(intent);
+                //yatta.getConnector().sendIwcIntent(intent);
             }
             _this.last_video_time = _this.video.currentTime;
         }, 500);
+    };
+
+    VideoController.prototype.get_doc_by_id = function (id) {
+        for (var i = 0; i < this.annotations.length; i++)
+            for (var j = 0; j < this.annotations[i].doc.length; j++) {
+                if (this.annotations[i].doc[j].get('collab_id') === id)
+                    return this.annotations[i].doc[j];
+            }
+        return null;
     };
     return VideoController;
 })();
@@ -323,8 +404,12 @@ function router(intent) {
                 }
             }
             break;
+        case 'REGISTER_MY_P2P_ID':
+            videoCtr.registerPeerId(intent.extras.peerId);
+            break;
     }
 }
 
+//yatta.getConnector().setIwcHandler(router);
 iwcClient.connect(router);
 //# sourceMappingURL=app.js.map

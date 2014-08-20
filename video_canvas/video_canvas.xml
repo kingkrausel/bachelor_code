@@ -31,10 +31,15 @@
 	<script src="//ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/dojo.js"></script>
  
   
-   <!-- <script src="http://golovin.de/ba/video_canvas/yatta/dest/browser/Widgets/libs/DUIClient.js"></script> -->
-  <script src="http://dbis.rwth-aachen.de/~jahns/role-widgets/widgetbundles/libraries/DUIClient.js"></script>
-<script src="http://golovin.de/ba/yatta/build/browser/Frameworks/JsonYatta.min.js"></script>
-  <script src="http://golovin.de/ba/yatta/build/browser/Connectors/IwcConnector.js"></script>
+  <!-- <script src="http://golovin.de/ba/video_canvas/yatta/dest/browser/Widgets/libs/DUIClient.js"></script> 
+    <script src="http://dbis.rwth-aachen.de/~jahns/role-widgets/widgetbundles/libraries/DUIClient.js"></script>
+
+    <script src="http://golovin.de/ba/yatta/build/browser/Connectors/IwcConnector.js"></script> 
+ -->
+ 
+  <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+  <script src="http://golovin.de/ba/yatta/build/browser/Frameworks/JsonYatta.min.js"></script>
+  <script src="http://golovin.de/ba/yatta/build/browser/Connectors/PeerJsConnector.min.js"></script>
   
 	<script type="text/javascript" src="http://golovin.de/ba/video_canvas/collaboration.js"></script>
 
@@ -43,7 +48,7 @@
 
     
     <script type ="application/javascript">
-      var iwcClient ;
+     /* */var iwcClient ;
       function init () {
       iwcClient = new iwc.Client () ;
       var iwcCallback = function ( intent ) {
@@ -52,14 +57,7 @@
       };
       //iwcClient.connect ( iwcCallback ) ;
       
-       var user_id = Math.ceil(Math.random() * 10000000);
-     
-     Y.createIwcConnector(function(Connector, user_id){
-        yatta = new Y.JsonYatta(user_id, Connector);
-        console.log("initializing..");        
-        //yatta.setMutableDefault('immutable');
-
-      });
+      
       }
       gadgets.util.registerOnLoadHandler ( init ) ;
     </script >
@@ -67,10 +65,22 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
     <script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script>
     <script> 
+    
+    var yatta, yattaHandler;
+    
     $(function(){
-      $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm"); 
-	   /**/ 
+	   /**/
+       
      
+      var user_id = Math.ceil(Math.random() * 10000000);
+     Y.createPeerJsConnector({key: '2am04n5pn26v42t9'}, function(Connector, user_id){
+    // Y.createIwcConnector(function(Connector, user_id){
+        yatta = new Y.JsonYatta(user_id, Connector);
+        console.log("initializing..");        
+        yatta.setMutableDefault('immutable');
+        $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm");
+
+      });
     
     });
     </script> 

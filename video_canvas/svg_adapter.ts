@@ -16,6 +16,7 @@ class Adapter {
         }
 
     }
+    public on_object_moved: (doc: fabric.IObject, event:string) => void;
     private on_annotation: (doc) => void;
     constructor(canvas: fabric.ICanvas) {
         this.canvas = canvas;
@@ -30,6 +31,8 @@ class Adapter {
         });
         
         this.canvas.on("object:moving", (a) => {
+            this.on_object_moved(a.target, "object:moving");
+            
             /*var s = Snap('#' + a.target.id);
             //console.log('moved object', s);
             var myMatrix = new Snap.Matrix();
