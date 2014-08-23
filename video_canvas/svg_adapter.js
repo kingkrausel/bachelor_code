@@ -1,4 +1,4 @@
-﻿/// <reference path="definitions/jquery.d.ts" />
+/// <reference path="definitions/jquery.d.ts" />
 /// <reference path="definitions/fabricjs.d.ts" />
 var Adapter = (function () {
     function Adapter(canvas) {
@@ -36,6 +36,7 @@ var Adapter = (function () {
         });
 
         this.canvas.on("object:scaling", function (a) {
+            _this.on_object_scaled(a.target, "object:scaling");
             /*var s = Snap('#' + a.target.id);
             console.log('scaled object', a.target);
             var myMatrix = new Snap.Matrix();
@@ -52,6 +53,7 @@ var Adapter = (function () {
         });
 
         this.canvas.on("object:rotating", function (a) {
+            _this.on_object_rotated(a.target, "object:rotating");
             /*var s = Snap('#' + a.target.id);
             console.log('rotated object', a.target);
             var myMatrix = new Snap.Matrix();

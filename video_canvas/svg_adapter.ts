@@ -16,7 +16,9 @@ class Adapter {
         }
 
     }
-    public on_object_moved: (doc: fabric.IObject, event:string) => void;
+    public on_object_moved: (doc: fabric.IObject, event: string) => void;
+    public on_object_rotated: (doc: fabric.IObject, event: string) => void;
+    public on_object_scaled: (doc: fabric.IObject, event: string) => void;
     private on_annotation: (doc) => void;
     constructor(canvas: fabric.ICanvas) {
         this.canvas = canvas;
@@ -52,6 +54,7 @@ class Adapter {
         });
 
         this.canvas.on("object:scaling", (a) => {
+            this.on_object_scaled(a.target, "object:scaling");
             /*var s = Snap('#' + a.target.id);
             console.log('scaled object', a.target);
             var myMatrix = new Snap.Matrix();
@@ -69,6 +72,7 @@ class Adapter {
         });
 
         this.canvas.on("object:rotating", (a) => {
+            this.on_object_rotated(a.target, "object:rotating");
             /*var s = Snap('#' + a.target.id);
             console.log('rotated object', a.target);
             var myMatrix = new Snap.Matrix();

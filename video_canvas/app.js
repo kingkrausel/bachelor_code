@@ -102,28 +102,26 @@ var VideoController = (function () {
             //
             console.log('collab addProperty triggered', prop);
             if (prop.indexOf(_this.peerId) === -1) {
-                setTimeout(function () {
-                    var anno = yatta.val(prop).val();
-                    anno.doc = collab.unpackFromYatta(anno.doc);
-                    console.log('collab received anno and unpacked', anno);
-                    _this.update_anno(anno);
-                    _this.display_annotation_at(_this.video.currentTime, false);
-                    Object.observe(yatta, function (changes) {
-                        changes.forEach(function (change) {
-                            // Letting us know what changed
-                            console.log('collab yatta changed', change.type, change.name, change.oldValue);
-                        });
-                    });
-                }, 1000);
+                var anno = yatta.val(prop).val();
+                anno.doc = collab.unpackFromYatta(anno.doc);
+                console.log('collab received anno and unpacked', anno);
+                _this.update_anno(anno);
+                _this.display_annotation_at(_this.video.currentTime, false);
             }
         });
 
         yatta.on('change', function (e, prop) {
             //
-            console.log('collab Property change was triggered', prop);
+            console.log('collab Property change was triggered', this);
+            var id = this.val('collab_id');
+            var doc = videoCtr.get_doc_by_id(id);
+            doc[prop] = this.val(prop);
+            videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
         });
 
         this.svg_adapter.on_object_moved = this.on_object_changed;
+        this.svg_adapter.on_object_rotated = this.on_object_changed;
+        this.svg_adapter.on_object_scaled = this.on_object_changed;
     }
     VideoController.prototype.set_video_time = function (time) {
         if (!this.video.paused)
@@ -148,28 +146,23 @@ var VideoController = (function () {
 
         yatta.val(id, anno, "immutable");
         console.log('collab yatta added anno');
-        /* var anno = { time: time, doc: object };
-        var op = collab.ote.createOp("change", anno, "insert", layer); //TODO: specify correct layer
-        collab.sendOp(collab.ote.localEvent(op));
-        
-        if (collab.t === 0) {
-        
-        collab.t = setTimeout(() => { collab.flush_actions(); }, collab.actionbufferflushdelay);
-        }
-        
-        // if buffer length exceeds maximum, flush buffer.
-        if (collab.actionbuffer.length >= collab.actionbuffermaxlength) {
-        collab.flush_actions();
-        }
-        
-        */
     };
 
     VideoController.prototype.on_object_changed = function (object, event) {
         console.log('collab onchange (moving)', object);
         var id = object.get('collab_id');
-        yatta.val(id).val('doc').val('left', object.left);
-        yatta.val(id).val('doc').val('top', object.top);
+
+        if (event === 'object:moving') {
+            yatta.val(id).val('doc').val('left', object.left);
+            yatta.val(id).val('doc').val('top', object.top);
+        }
+        if (event === 'object:scaling') {
+            yatta.val(id).val('doc').val('scaleX', object.scaleX);
+            yatta.val(id).val('doc').val('scaleY', object.scaleY);
+        }
+        if (event === 'object:rotating') {
+            yatta.val(id).val('doc').val('angle', object.angle);
+        }
     };
 
     VideoController.prototype.update_anno = function (anno) {
