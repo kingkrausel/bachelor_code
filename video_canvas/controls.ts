@@ -9,6 +9,7 @@ class VideoInstructionsCtrl {
     public duration = 1;
     public jSlider: any;
     private annotated_times: number[] = [];
+    public drawinMode = true;
     constructor() {
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
@@ -27,8 +28,13 @@ class VideoInstructionsCtrl {
             "extras": {}
         };
         this.playing = !this.playing;
-        if (this.playing) this.play_btn.text('Pause');
-        else this.play_btn.text('Play');
+        //if (this.playing) this.play_btn.text('Pause');
+        //else this.play_btn.text('Play');
+
+        var newClass = !this.playing ? 'fa fa-play' : 'fa fa-pause';
+        //if(this.drawinMode)
+        jQuery('#play_pause i').removeClass();
+        jQuery('#play_pause i').attr('class', newClass);
 
         if (iwc.util.validateIntent(intent)) {
             //console.log('intent gesendet!');
@@ -43,6 +49,7 @@ class VideoInstructionsCtrl {
     }
 
     public toggle() {
+        this.drawinMode = !this.drawinMode;
         var intent = {
             "component": "",
             "sender": "",
@@ -59,6 +66,10 @@ class VideoInstructionsCtrl {
             console.log('toggle intent ');
             iwcClient.publish(intent);
         }
+        var newClass = this.drawinMode ? 'fa fa-pencil':'fa fa-arrows';
+        //if(this.drawinMode)
+        jQuery('#toggle i').removeClass();
+        jQuery('#toggle i').attr('class', newClass);
     }
 
     public goto_next_anno(from = this.video_time):void {
@@ -68,17 +79,37 @@ class VideoInstructionsCtrl {
                 this.set_video_time(this.annotated_times[i]);
                 break;
             }
-        }
-        
-        
+        }        
     }
 
+    public goto_annotation(annoIndex: number) {
+        this.set_video_time(this.annotated_times[annoIndex]);
+    }
+
+    public on_click_marker() {
+
+    }
+
+    public circle() {
+        if (this.drawinMode) this.toggle();
+        sendIntent('MAKE_CIRCLE', {});
+    }
+    public rect() {
+        if (this.drawinMode) this.toggle()
+        sendIntent('MAKE_RECT', {});
+    }
 
     public update_markers() {
         var max = this.jSlider.slider("option", "max");
         this.jSlider.find('.ui-slider-tick-mark').remove();
-        this.annotated_times.forEach((time) => {
-            $('<span class="ui-slider-tick-mark"></span>').css('left', (100 * (time / max)) + '%').appendTo(this.jSlider);
+        this.annotated_times.forEach((time,index) => {
+            $('<span class="ui-slider-tick-mark" id="marker_'+index+'"></span>').css('left', (100 * (time / max)) + '%').appendTo(this.jSlider);
+            $('#marker_' + index).attr('data-marker-index',index);
+            $('#marker_' + index).click(function () {
+                var index = parseInt( $(this).attr('data-marker-index') );
+                //console.log('collba id is:', id);
+                controller.goto_annotation(index);
+            });
         });
     }
 
@@ -156,3 +187,21 @@ function controller_router(intent) {
 
 
 iwcClient.connect(controller_router);
+
+function sendIntent(action, data) {
+    var intent = {
+        "component": "",
+        "sender": "",
+        "data": "",
+        "dataType": "text/xml",
+        "action": action,
+        "categories": [],
+        "flags": ["PUBLISH_LOCAL"],
+        "extras": data
+    };
+
+    if (iwc.util.validateIntent(intent)) {
+        iwcClient.publish(intent);
+        //yatta.getConnector().sendIwcIntent(intent);
+    }
+}

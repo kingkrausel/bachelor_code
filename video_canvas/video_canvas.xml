@@ -86,7 +86,7 @@
     </script> 
   </head> 
 
-     <div id="includedContent"></div>
+     <body id="includedContent"></body>
  
 		 
 		 ]]>

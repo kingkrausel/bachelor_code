@@ -1,11 +1,33 @@
-﻿ 
+﻿ <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
 <div >
-    <button id="play_pause"  onclick="controller.play_pause()">Play</button>
-    <button id="toggle"  onclick="controller.toggle()">Toggle</button>
-    <button id="next"  onclick="controller.goto_next_anno()">>></button>
+    <button id="play_pause"  onclick="controller.play_pause()">
+                <i class="fa fa-play"></i>            
+    </button>
+    
+    <button id="next"  onclick="controller.goto_next_anno()" title="go to next annotation">
+         <i class="fa fa-forward"></i>
+    </button>
+     
 
     <div id="resolution-slider" style="width:250px;"></div>
-
+    
+    <ul id="fabric-controls">
+        <li>
+            <button id="toggle"  onclick="controller.toggle()" title="pencil/moving tool">
+                <i class="fa fa-pencil"></i>
+            </button>            
+        </li>
+        <li>
+            <button id="circle"  onclick="controller.circle()" title="insert circle">
+                 <i class="fa fa-circle-thin"></i>
+             </button>
+        </li>
+        <li>
+            <button id="rect"  onclick="controller.rect()" title="insert rect">
+                 <i class="fa fa-square-o"></i>
+             </button>
+        </li>
+    </ul>
   
 
 </div>

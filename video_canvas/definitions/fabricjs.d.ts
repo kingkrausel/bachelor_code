@@ -1,5 +1,7 @@
 // Type definitions for FabricJS
 // Project: http://fabricjs.com/
+// Definitions by: Oliver Klemencic <https://github.com/oklemencic/>
+// Definitions: https://github.com/borisyankov/DefinitelyTyped
 
 declare module fabric {
 
@@ -30,7 +32,7 @@ declare module fabric {
         fire(eventName: string, options);
         stopObserving(eventName: string, handler: (e) => any);
 
-        off(eventName, handler?);
+        off(eventName, handler);
     }
 
     export interface IFilter {
@@ -218,7 +220,7 @@ declare module fabric {
     }
 
     export interface IObject extends IObservable {
-        toSVG(): string;
+
         // constraint properties
         lockMovementX: boolean;
         lockMovementY: boolean;
@@ -322,7 +324,7 @@ declare module fabric {
         setWidth(value: number): IObject;
 
         // methods
-        bringForward(): IObject;
+        bringForward(intersecting?: boolean): IObject;
         bringToFront(): IObject;
         center(): IObject;
         centerH(): IObject;
@@ -333,6 +335,7 @@ declare module fabric {
         drawBorders(context: CanvasRenderingContext2D): IObject;
         drawCorners(context: CanvasRenderingContext2D): IObject;
         get(property: string): any;
+        getBoundingRect(): { left: number; top: number; width: number; height: number };
         getBoundingRectHeight(): number;
         getBoundingRectWidth(): number;
         getSvgStyles(): string;
@@ -352,7 +355,7 @@ declare module fabric {
         scale(value: number): IObject;
         scaleToHeight(value: number): IObject;
         scaleToWidth(value: number): IObject;
-        sendBackwards(): IObject;
+        sendBackwards(intersecting?: boolean): IObject;
         sendToBack(): IObject;
 
         set(properties: IObjectOptions): IObject;
@@ -366,7 +369,7 @@ declare module fabric {
         toDataURL(callback): string;
         toggle(property): IObject;
         toGrayscale(): IObject;
-        toJSON(propertiesToInclude?:string[]): string;
+        toJSON(propertiesToInclude): string;
         toObject(propertiesToInclude): any;
         tostring(): string;
         transform(ctx: CanvasRenderingContext2D);
@@ -604,6 +607,8 @@ declare module fabric {
 
         loadFromJSON(json, callback: () => void): void;
         loadFromDatalessJSON(json, callback: () => void): void;
+
+        off(action:string):void;
     }
 
     export interface IBrightnessFilter {
@@ -852,7 +857,7 @@ declare module fabric {
         toArray(arrayLike): any[];
         toFixed(number, fractionDigits);
         wrapElement(element: HTMLElement, wrapper, attributes);
-        enlivenObjects(objects:IObject[],callback:(objs)=>void);
+
+        enlivenObjects(arr:any,callbacl:any);
     }
 }
- 

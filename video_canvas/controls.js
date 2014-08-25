@@ -7,6 +7,7 @@ var VideoInstructionsCtrl = (function () {
         this.video_time = 0;
         this.duration = 1;
         this.annotated_times = [];
+        this.drawinMode = true;
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
         this.jSlider.slider();
@@ -24,10 +25,14 @@ var VideoInstructionsCtrl = (function () {
             "extras": {}
         };
         this.playing = !this.playing;
-        if (this.playing)
-            this.play_btn.text('Pause');
-        else
-            this.play_btn.text('Play');
+
+        //if (this.playing) this.play_btn.text('Pause');
+        //else this.play_btn.text('Play');
+        var newClass = !this.playing ? 'fa fa-play' : 'fa fa-pause';
+
+        //if(this.drawinMode)
+        jQuery('#play_pause i').removeClass();
+        jQuery('#play_pause i').attr('class', newClass);
 
         if (iwc.util.validateIntent(intent)) {
             //console.log('intent gesendet!');
@@ -44,6 +49,7 @@ var VideoInstructionsCtrl = (function () {
     };
 
     VideoInstructionsCtrl.prototype.toggle = function () {
+        this.drawinMode = !this.drawinMode;
         var intent = {
             "component": "",
             "sender": "",
@@ -59,6 +65,11 @@ var VideoInstructionsCtrl = (function () {
             console.log('toggle intent ');
             iwcClient.publish(intent);
         }
+        var newClass = this.drawinMode ? 'fa fa-pencil' : 'fa fa-arrows';
+
+        //if(this.drawinMode)
+        jQuery('#toggle i').removeClass();
+        jQuery('#toggle i').attr('class', newClass);
     };
 
     VideoInstructionsCtrl.prototype.goto_next_anno = function (from) {
@@ -71,12 +82,37 @@ var VideoInstructionsCtrl = (function () {
         }
     };
 
+    VideoInstructionsCtrl.prototype.goto_annotation = function (annoIndex) {
+        this.set_video_time(this.annotated_times[annoIndex]);
+    };
+
+    VideoInstructionsCtrl.prototype.on_click_marker = function () {
+    };
+
+    VideoInstructionsCtrl.prototype.circle = function () {
+        if (this.drawinMode)
+            this.toggle();
+        sendIntent('MAKE_CIRCLE', {});
+    };
+    VideoInstructionsCtrl.prototype.rect = function () {
+        if (this.drawinMode)
+            this.toggle();
+        sendIntent('MAKE_RECT', {});
+    };
+
     VideoInstructionsCtrl.prototype.update_markers = function () {
         var _this = this;
         var max = this.jSlider.slider("option", "max");
         this.jSlider.find('.ui-slider-tick-mark').remove();
-        this.annotated_times.forEach(function (time) {
-            $('<span class="ui-slider-tick-mark"></span>').css('left', (100 * (time / max)) + '%').appendTo(_this.jSlider);
+        this.annotated_times.forEach(function (time, index) {
+            $('<span class="ui-slider-tick-mark" id="marker_' + index + '"></span>').css('left', (100 * (time / max)) + '%').appendTo(_this.jSlider);
+            $('#marker_' + index).attr('data-marker-index', index);
+            $('#marker_' + index).click(function () {
+                var index = parseInt($(this).attr('data-marker-index'));
+
+                //console.log('collba id is:', id);
+                controller.goto_annotation(index);
+            });
         });
     };
 
@@ -151,4 +187,22 @@ function controller_router(intent) {
 }
 
 iwcClient.connect(controller_router);
+
+function sendIntent(action, data) {
+    var intent = {
+        "component": "",
+        "sender": "",
+        "data": "",
+        "dataType": "text/xml",
+        "action": action,
+        "categories": [],
+        "flags": ["PUBLISH_LOCAL"],
+        "extras": data
+    };
+
+    if (iwc.util.validateIntent(intent)) {
+        iwcClient.publish(intent);
+        //yatta.getConnector().sendIwcIntent(intent);
+    }
+}
 //# sourceMappingURL=controls.js.map

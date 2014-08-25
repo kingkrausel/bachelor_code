@@ -82,8 +82,9 @@ var VideoController = (function () {
         this.canvas = new fabric.Canvas('c', {
             isDrawingMode: true
         });
-        this.canvas.setHeight(480);
-        this.canvas.setWidth(640);
+        this.canvas.setHeight(245);
+        this.canvas.setWidth(620);
+        this.canvas.selection = false;
         this.svg_adapter = new Adapter(this.canvas);
 
         this.svg_adapter.register_annotation_event(this.on_object_added);
@@ -95,7 +96,7 @@ var VideoController = (function () {
             //this.annotations.push({ doc: objects[0], time: 5.0 });
             //this.svg_docs[5.0] = objects[0];
             //console.log(this.svg_docs);
-            _this.update_anno({ doc: objects[0], time: 5.0 });
+            //this.update_anno({ doc: objects[0], time: 5.0 });
         });
 
         yatta.on('addProperty', function (e, prop) {
@@ -111,12 +112,18 @@ var VideoController = (function () {
         });
 
         yatta.on('change', function (e, prop) {
-            //
-            console.log('collab Property change was triggered', this);
+            if (prop.indexOf(this.peerId) !== -1)
+                return;
+
+            //console.log('collab Property change was triggered', this);
             var id = this.val('collab_id');
-            var doc = videoCtr.get_doc_by_id(id);
-            doc[prop] = this.val(prop);
-            videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
+            if (id) {
+                var doc = videoCtr.get_doc_by_id(id);
+
+                //console.log('collab doc', doc);
+                doc[prop] = this.val(prop);
+                videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
+            }
         });
 
         this.svg_adapter.on_object_moved = this.on_object_changed;
@@ -149,20 +156,35 @@ var VideoController = (function () {
     };
 
     VideoController.prototype.on_object_changed = function (object, event) {
-        console.log('collab onchange (moving)', object);
+        var tempJson = object.toJSON(['collab_id']);
         var id = object.get('collab_id');
-
+        var tempYatta = collab.unpackFromYatta(yatta.val(id).val('doc').val());
+        fabric.util.enlivenObjects([tempYatta], function (objects) {
+            var tempJSON2 = objects[0].toJSON(['collab_id']);
+            videoCtr.svg_adapter.handle_diverged_props(tempJson, tempJSON2, function (prop) {
+                //console.log('would change:', prop, tempJson[prop], tempJSON2[prop]);
+                yatta.val(id).val('doc').val(prop, tempJson[prop]);
+            });
+        });
+        /*var id = object.get('collab_id');
+        
         if (event === 'object:moving') {
-            yatta.val(id).val('doc').val('left', object.left);
-            yatta.val(id).val('doc').val('top', object.top);
+        yatta.val(id).val('doc').val('left', object.left);
+        yatta.val(id).val('doc').val('top', object.top);
         }
         if (event === 'object:scaling') {
-            yatta.val(id).val('doc').val('scaleX', object.scaleX);
-            yatta.val(id).val('doc').val('scaleY', object.scaleY);
+        yatta.val(id).val('doc').val('left', object.left);
+        yatta.val(id).val('doc').val('top', object.top);
+        yatta.val(id).val('doc').val('scaleX', object.scaleX);
+        yatta.val(id).val('doc').val('scaleY', object.scaleY);
+        yatta.val(id).val('doc').val('flipX', object.flipX);
+        yatta.val(id).val('doc').val('flipY', object.flipY);
+        // console.log('fabric scaled object (old, new)', object.toJSON(['collab_id']) );
+        
         }
         if (event === 'object:rotating') {
-            yatta.val(id).val('doc').val('angle', object.angle);
-        }
+        yatta.val(id).val('doc').val('angle', object.angle);
+        }*/
     };
 
     VideoController.prototype.update_anno = function (anno) {
@@ -186,7 +208,7 @@ var VideoController = (function () {
             }
         }
 
-        if (anno.doc instanceof fabric.Path) {
+        if (anno.doc instanceof fabric.Object) {
             if (!curr_anno) {
                 this.annotations.push({ time: anno.time, doc: [jQuery.extend(true, {}, anno.doc)] });
             } else {
@@ -315,17 +337,6 @@ var VideoController = (function () {
             if (_this.last_video_time == _this.video.currentTime)
                 return;
 
-            /*if (this.last_video_time < this.svg_docs[0].time
-            && this.svg_docs[0].time <= this.video.currentTime
-            && !this.video.paused) {
-            this.canvas.add(this.svg_docs[0].doc);
-            this.video.pause();
-            window.setTimeout(() => {
-            this.canvas.clear();
-            this.video.play();
-            }, 3000);
-            }*/
-            // if(!this.video.paused)
             _this.display_annotation_at(_this.video.currentTime, !_this.video.paused);
 
             var intent = {
@@ -355,6 +366,35 @@ var VideoController = (function () {
                     return this.annotations[i].doc[j];
             }
         return null;
+    };
+
+    VideoController.prototype.make_circle = function () {
+        this.video.pause();
+        var circle = new fabric.Circle({
+            left: Math.random() * this.canvas.getWidth(),
+            top: Math.random() * this.canvas.getHeight(),
+            fill: 'rgba(0,0,0,0)',
+            radius: 20,
+            strokeWidth: 2,
+            stroke: 'rgba(0,0,0,1)'
+        });
+        this.canvas.add(circle);
+        this.canvas.renderAll();
+    };
+
+    VideoController.prototype.make_rect = function () {
+        this.video.pause();
+        var rect = new fabric.Rect({
+            left: Math.random() * this.canvas.getWidth(),
+            top: Math.random() * this.canvas.getHeight(),
+            fill: 'rgba(0,0,0,0)',
+            width: 20,
+            height: 20,
+            strokeWidth: 2,
+            stroke: 'rgba(0,0,0,1)'
+        });
+        this.canvas.add(rect);
+        this.canvas.renderAll();
     };
     return VideoController;
 })();
@@ -399,6 +439,13 @@ function router(intent) {
             break;
         case 'REGISTER_MY_P2P_ID':
             videoCtr.registerPeerId(intent.extras.peerId);
+            break;
+
+        case 'MAKE_CIRCLE':
+            videoCtr.make_circle();
+            break;
+        case 'MAKE_RECT':
+            videoCtr.make_rect();
             break;
     }
 }

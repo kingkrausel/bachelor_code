@@ -8,6 +8,8 @@ var Adapter = (function () {
 
         this.canvas.on("object:added", function (a) {
             _this.on_object_added(a);
+            /*console.log("fabric added object", a.target);
+            console.log("fabric instance of f.Obj:", a.target instanceof fabric.Object);*/
             //
         });
 
@@ -16,7 +18,13 @@ var Adapter = (function () {
         });
 
         this.canvas.on("object:moving", function (a) {
-            _this.on_object_moved(a.target, "object:moving");
+            if (a.target instanceof fabric.Group) {
+                a.target.objects.forEach(function (obj) {
+                    console.log("fabric moving", obj);
+                    _this.on_object_moved(obj, "object:moving");
+                });
+            } else
+                _this.on_object_moved(a.target, "object:moving");
             /*var s = Snap('#' + a.target.id);
             //console.log('moved object', s);
             var myMatrix = new Snap.Matrix();
@@ -93,22 +101,18 @@ var Adapter = (function () {
         var object = a.target;
 
         //console.log('object:added', object);
-        object.id = this.make_id();
-
+        //object.id = this.make_id();
         //console.log('hier is was', this.on_annotation);
         //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
         //this.on_annotation(this.canvas.getObjects());
         this.on_annotation(object);
-
         //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2');
-        var svg = object.toSVG();
-
+        /*var svg = object.toSVG();
         //console.log($(svg).attr('id','joman'));
         this.svg.append($(svg).attr('id', this.make_id()));
         this.counter++;
-
         //console.log(this.canvas.toSVG());
-        $("svg").html($("svg").html());
+        $("svg").html($("svg").html());*/
     };
 
     Adapter.prototype.make_id = function (id) {
@@ -134,6 +138,24 @@ var Adapter = (function () {
             this.svg.append(object.toSVG());
             console.log(this.canvas.toSVG());
             $("svg").html($("svg").html());*/
+        }
+    };
+
+    Adapter.prototype.instance_of_fabric_obj = function () {
+    };
+
+    Adapter.prototype.handle_diverged_props = function (a, b, callback) {
+        for (var prop in a) {
+            if (typeof a[prop] !== 'function') {
+                if (typeof a[prop] === 'string' || typeof a[prop] === 'number' || typeof a[prop] === 'boolean') {
+                    if (a[prop] !== b[prop])
+                        callback(prop);
+                }
+                if (typeof a[prop] === 'object' || typeof a[prop] === 'array') {
+                    if (JSON.stringify(a[prop]) !== JSON.stringify(b[prop]))
+                        callback(prop);
+                }
+            }
         }
     };
     return Adapter;
