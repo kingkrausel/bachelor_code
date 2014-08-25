@@ -6,17 +6,31 @@ class VideoInstructionsCtrl {
     public play_btn = jQuery('#play_pause');
     public playing = false;
     public video_time = 0;
+    public last_video_time = 0;
     public duration = 1;
     public jSlider: any;
     private annotated_times: number[] = [];
     public drawinMode = true;
+    public anno_countdown;
+    public anno_view_time = 5;
+    public anno_cd_timer = 0;
+    public watching_anno = false;
+    public color: string;
     constructor() {
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
         this.jSlider.slider();
+        this.anno_countdown = this.anno_view_time;
     }
     public play_pause() {
-        console.log('was geht');
+        if (this.watching_anno) { //watching anno, but clicked play/pause
+            this.stop_anno_countdown();
+            this.pause();
+        } else { //normal play/pause
+            this.playing ? this.pause() : this.play();
+            this.stop_anno_countdown();
+        }
+        /*this.stop_anno_countdown();
         var intent = {
             "component": "",
             "sender": "",
@@ -39,7 +53,31 @@ class VideoInstructionsCtrl {
         if (iwc.util.validateIntent(intent)) {
             //console.log('intent gesendet!');
             iwcClient.publish(intent);
-        }
+        }*/
+    }
+
+    public play() {
+        //this.stop_anno_countdown();
+        this.playing = true;
+        var newClass = !this.playing ? 'fa fa-play' : 'fa fa-pause';
+        jQuery('#play_pause i').removeClass();
+        jQuery('#play_pause i').attr('class', newClass);
+        sendIntent('PLAY',{});
+    }
+
+    public pause() {
+        //this.stop_anno_countdown();
+        this.playing = false;
+        var newClass = !this.playing ? 'fa fa-play' : 'fa fa-pause';
+        //if(this.drawinMode)
+        jQuery('#play_pause i').removeClass();
+        jQuery('#play_pause i').attr('class', newClass);
+        sendIntent('PAUSE', {});
+    }
+
+    public set_color(color) {
+        this.color = color;
+        sendIntent('SET_COLOR', { color: color });
     }
 
     public add_annotation_time(anno) {
@@ -87,16 +125,22 @@ class VideoInstructionsCtrl {
     }
 
     public on_click_marker() {
-
+        
     }
+
+    
 
     public circle() {
         if (this.drawinMode) this.toggle();
         sendIntent('MAKE_CIRCLE', {});
+        if(this.playing)
+            this.pause();
     }
     public rect() {
         if (this.drawinMode) this.toggle()
         sendIntent('MAKE_RECT', {});
+        if (this.playing)
+            this.pause();
     }
 
     public update_markers() {
@@ -123,12 +167,28 @@ class VideoInstructionsCtrl {
     }
 
     public get_updated_time(time: number) {
+        this.last_video_time = this.video_time;
         this.video_time = time;
-        this.jSlider.slider({value:time});
+        this.jSlider.slider({ value: time });
+        var anno_at = this.get_time_between(this.last_video_time, time);
+        if (this.playing && anno_at >= 0) {
+            this.pause();            
+            this.set_video_time(anno_at);
+            this.start_anno_countdown();
+            this.last_video_time = anno_at;
+        }
+    }
+
+    public get_time_between(a: number, b: number) {
+        for (var i = 0; i < this.annotated_times.length; i++) {
+            if (a < this.annotated_times[i] && this.annotated_times[i] <= b)
+                return this.annotated_times[i];
+        }
+        return -1;
     }
 
     public set_video_time(time: number) {
-        console.log('set_video_time');
+        this.stop_anno_countdown();
         var intent = {
             "component": "",
             "sender": "",
@@ -159,12 +219,74 @@ class VideoInstructionsCtrl {
 
         this.update_markers();
     }
+    public start_anno_countdown() {
+        //this.playing = false;
+        this.watching_anno = true;
+        jQuery('#play_pause i').removeClass("fa-play fa-pause").text(this.anno_countdown);
+
+        this.anno_cd_timer = setInterval(() => {
+            this.anno_countdown--;
+            jQuery('#play_pause i').text(this.anno_countdown);
+            if (this.anno_countdown <= 0) {
+                this.stop_anno_countdown();
+                this.play();                              
+            }
+        }, 1000);
+    }
+    public stop_anno_countdown() {        
+        jQuery('#play_pause i').text('');
+        //this.play_pause();
+        this.anno_countdown = this.anno_view_time;
+        var newClass = !this.playing ? 'fa fa-play' : 'fa fa-pause';
+        jQuery('#play_pause i').removeClass();
+        jQuery('#play_pause i').attr('class', newClass);
+        window.clearInterval(this.anno_cd_timer);
+        this.watching_anno = false;
+
+    }
 
 }
 
 var controller:VideoInstructionsCtrl;
 $(document).ready(function () {
-    controller = new VideoInstructionsCtrl();    
+    controller = new VideoInstructionsCtrl();  
+    function hexFromRGB(r, g, b) {
+        var hex = [
+            r.toString(16),
+            g.toString(16),
+            b.toString(16)
+        ];
+        $.each(hex, function (nr, val) {
+            if (val.length === 1) {
+                hex[nr] = "0" + val;
+            }
+        });
+        return hex.join("").toUpperCase();
+    }
+    function refreshSwatch() {
+        var red = $("#red").slider("value"),
+            green = $("#green").slider("value"),
+            blue = $("#blue").slider("value"),
+            hex = hexFromRGB(red, green, blue);
+        $("#swatch").css("background-color", "#" + hex);
+        controller.set_color("#" + hex);
+    }
+    $(function () {
+        $("#red, #green, #blue").slider({
+            orientation: "horizontal",
+            range: "min",
+            max: 255,
+            value: 127,
+            slide: refreshSwatch,
+            change: refreshSwatch
+        });
+        $("#red").slider("value", 255);
+        $("#green").slider("value", 140);
+        $("#blue").slider("value", 60);
+
+        var col = jQuery('#swatch').css('background-color');
+        controller.set_color(col);
+    });  
 });
 
 function controller_router(intent) {
@@ -180,6 +302,13 @@ function controller_router(intent) {
             break;
         case 'NEW_ANNOTATION':
             controller.add_annotation_time( parseFloat(intent.extras.time));
+            break;
+        case 'OWN_NEW_ANNO':
+            controller.get_updated_time(intent.extras.time);
+            //if (controller.playing) {
+                controller.pause();
+                controller.stop_anno_countdown();
+            //}
             break;
     }
 

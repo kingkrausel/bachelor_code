@@ -19,6 +19,9 @@ class VideoController {
     public peerId: string;
     public collabPeerIds: string[] = [];
     public fabricCounter = 0;
+    public watching_anno = false;
+    public video_observer_timer: number = 0;
+    public color: string = 'black';
     /////public isPlaying: boolean = false;
     constructor(id='video_player') {   
         this.video = <HTMLVideoElement>document.getElementById(id);
@@ -95,6 +98,7 @@ class VideoController {
         this.canvas.setHeight(245);
         this.canvas.setWidth(620);
         this.canvas.selection = false; 
+        
         this.svg_adapter = new Adapter(this.canvas);
         
         this.svg_adapter.register_annotation_event(this.on_object_added);
@@ -143,7 +147,7 @@ class VideoController {
     }
 
     public set_video_time(time) {
-        if (!this.video.paused) this.play_pause();
+       // if (!this.video.paused) this.play_pause();
         this.video.currentTime = time;
         this.canvas.clear();
         
@@ -171,6 +175,20 @@ class VideoController {
         
         yatta.val(id, anno, "immutable");
         console.log('collab yatta added anno');
+
+        var intent = {
+            "component": "",
+            "sender": "",
+            "data": "",
+            "dataType": "text/xml",
+            "action": "OWN_NEW_ANNO",
+            "categories": [],
+            "flags": ["PUBLISH_LOCAL"],
+            "extras": { "time": anno.time }
+        };
+            iwcClient.publish(intent);
+
+
  
     }
 
@@ -279,13 +297,23 @@ class VideoController {
 
 
 
-    public play_pause() {
+    public play_pause(force:string = 'no') {
         //this.video = VIDEO;
-        console.log('PLAY VIDEO');
-        if (this.video.paused) {
+        if (force === 'PLAY') {
+            //this.start_video_observer();
             this.video.play();
-        } else {
+        }
+        else if (force === 'PAUSE') {
+            //window.clearInterval(this.video_observer_timer);
             this.video.pause();
+        }
+
+        if (force === 'no') {
+            if (this.video.paused) {
+                this.video.play();
+            } else {
+                this.video.pause();
+            }
         }
     }
 
@@ -313,7 +341,7 @@ class VideoController {
 
         var res = this.annotation_at(time);
         this.canvas.clear();
-        if (!res) return;
+        if (!res) return null;
         
         //if (!this.video.paused) {
             this.canvas.off('object:added');
@@ -352,10 +380,13 @@ class VideoController {
 
     }
 
-    
+    public update_color(color) {
+        this.color = color;
+        this.canvas.freeDrawingBrush.color = color;
+    }
 
     private start_video_observer() {
-        window.setInterval(() => {
+        /*window.setInterval(() => {
             if (this.last_video_time == this.video.currentTime) return;            
 
             this.display_annotation_at(this.video.currentTime, !this.video.paused);
@@ -377,7 +408,33 @@ class VideoController {
                 //yatta.getConnector().sendIwcIntent(intent);
             }
             this.last_video_time = this.video.currentTime;
-        }, 500);
+        }, 500);*/
+        this.video_observer_timer =  window.setInterval(() => {
+            if (this.video.paused) return;
+
+            this.canvas.clear();
+            
+            if (Math.abs(this.last_video_time - this.video.currentTime) > 0.3) {
+                var intent = {
+                    "component": "",
+                    "sender": "",
+                    "data": "",
+                    "dataType": "text/xml",
+                    "action": "UPDATE_VIDEO_TIME",
+                    "categories": [],
+                    "flags": ["PUBLISH_LOCAL"],
+                    "extras": { "time": this.video.currentTime.toString() }
+                };
+
+                if (iwc.util.validateIntent(intent)) {
+                    //console.log('send time intent');
+                    iwcClient.publish(intent);
+                    //yatta.getConnector().sendIwcIntent(intent);
+                }
+                this.last_video_time = this.video.currentTime;
+            }
+           
+        }, 100);
     }
 
     public get_doc_by_id(id:string) {
@@ -397,7 +454,7 @@ class VideoController {
             fill: 'rgba(0,0,0,0)',
             radius: 20,
             strokeWidth: 2,
-            stroke: 'rgba(0,0,0,1)'
+            stroke: this.color//'rgba(0,0,0,1)'
         });
         this.canvas.add(circle);
         this.canvas.renderAll();
@@ -412,7 +469,7 @@ class VideoController {
             width: 20,
             height: 20,
             strokeWidth: 2,
-            stroke: 'rgba(0,0,0,1)'
+            stroke: this.color//'rgba(0,0,0,1)'
         });
         this.canvas.add(rect);
         this.canvas.renderAll();
@@ -433,8 +490,14 @@ function router(intent) {
         case 'PLAY/PAUSE':
             videoCtr.play_pause();
             break;
+        case 'PLAY':
+            videoCtr.play_pause('PLAY');
+            break;
+        case 'PAUSE':
+            videoCtr.play_pause('PAUSE');
+            break;
         case 'SET_VIDEO_TIME':
-            if (!videoCtr.video.paused) videoCtr.play_pause();
+            //if (!videoCtr.video.paused) videoCtr.play_pause();
             videoCtr.video.currentTime = parseFloat(intent.extras.time);
             videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
             
@@ -465,7 +528,7 @@ function router(intent) {
             break;
         case 'REGISTER_MY_P2P_ID':
             videoCtr.registerPeerId(intent.extras.peerId);
-            break; 
+            break;       
          
         /***************** FABRIC CONTENT EDIT*********************/ 
         case 'MAKE_CIRCLE':
@@ -473,6 +536,9 @@ function router(intent) {
             break; 
         case 'MAKE_RECT':
             videoCtr.make_rect();
+            break; 
+        case 'SET_COLOR':
+            videoCtr.update_color(intent.extras.color);
             break;     
     }
 
