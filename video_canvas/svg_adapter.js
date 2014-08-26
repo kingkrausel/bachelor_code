@@ -17,6 +17,14 @@ var Adapter = (function () {
             //jQuery('#'+a.id).remove();
         });
 
+        this.canvas.on("object:selected", function (a) {
+            videoCtr.activeDoc = a.target;
+        });
+
+        this.canvas.on("selection:cleared", function (a) {
+            videoCtr.activeDoc = null;
+        });
+
         this.canvas.on("object:moving", function (a) {
             if (a.target instanceof fabric.Group) {
                 a.target.objects.forEach(function (obj) {

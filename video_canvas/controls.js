@@ -17,6 +17,10 @@ var VideoInstructionsCtrl = (function () {
         this.jSlider.slider();
         this.anno_countdown = this.anno_view_time;
     }
+    VideoInstructionsCtrl.prototype.I_am_alive = function () {
+        sendIntent('I_AM_ALIVE', { widget: 'controls' });
+    };
+
     VideoInstructionsCtrl.prototype.play_pause = function () {
         if (this.watching_anno) {
             this.stop_anno_countdown();
@@ -199,6 +203,7 @@ var VideoInstructionsCtrl = (function () {
         };
 
         iwcClient.publish(intent);
+        this.get_updated_time(time);
     };
 
     VideoInstructionsCtrl.prototype.update_duration = function (dur) {
@@ -217,6 +222,7 @@ var VideoInstructionsCtrl = (function () {
 
         this.update_markers();
     };
+
     VideoInstructionsCtrl.prototype.start_anno_countdown = function () {
         var _this = this;
         //this.playing = false;
@@ -306,6 +312,13 @@ function controller_router(intent) {
             controller.pause();
             controller.stop_anno_countdown();
 
+            break;
+
+        case 'I_AM_ALIVE':
+            if (intent.extras.widget === 'video_canvas') {
+                controller.set_color(controller.color);
+                controller.jSlider.slider({ value: 0 });
+            }
             break;
     }
 }

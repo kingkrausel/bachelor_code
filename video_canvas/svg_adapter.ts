@@ -33,6 +33,14 @@ class Adapter {
         this.canvas.on("object:removed", (a) => {
             //jQuery('#'+a.id).remove();
         });
+
+        this.canvas.on("object:selected", (a) => {
+            videoCtr.activeDoc = a.target;
+        });
+
+        this.canvas.on("selection:cleared", (a) => {
+            videoCtr.activeDoc = null;
+        });
         
         this.canvas.on("object:moving", (a) => {
             

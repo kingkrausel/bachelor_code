@@ -22,6 +22,11 @@ class VideoInstructionsCtrl {
         this.jSlider.slider();
         this.anno_countdown = this.anno_view_time;
     }
+
+    private I_am_alive() {
+        sendIntent('I_AM_ALIVE', {widget:'controls'});
+    }
+
     public play_pause() {
         if (this.watching_anno) { //watching anno, but clicked play/pause
             this.stop_anno_countdown();
@@ -199,8 +204,9 @@ class VideoInstructionsCtrl {
             "flags": ["PUBLISH_LOCAL"],
             "extras": {'time': time.toString()}
         };
-
+        
         iwcClient.publish(intent);
+        this.get_updated_time(time);
         
     }
 
@@ -219,6 +225,8 @@ class VideoInstructionsCtrl {
 
         this.update_markers();
     }
+    
+
     public start_anno_countdown() {
         //this.playing = false;
         this.watching_anno = true;
@@ -309,6 +317,14 @@ function controller_router(intent) {
                 controller.pause();
                 controller.stop_anno_countdown();
             //}
+            break;
+
+        /************** Check if other widgets are there ***********************/
+        case 'I_AM_ALIVE':
+            if (intent.extras.widget === 'video_canvas') {
+                controller.set_color(controller.color);
+                controller.jSlider.slider({ value: 0 });
+            }
             break;
     }
 

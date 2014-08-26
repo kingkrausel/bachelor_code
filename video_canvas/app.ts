@@ -1,3 +1,4 @@
+/// <reference path="networkCtr.ts" />
 /// <reference path="svg_adapter.ts" />
 /// <reference path="definitions/jquery.d.ts" />
 /// <reference path="definitions/fabricjs.d.ts" />
@@ -22,6 +23,8 @@ class VideoController {
     public watching_anno = false;
     public video_observer_timer: number = 0;
     public color: string = 'black';
+    public activeDoc: fabric.Object = null;
+    public last_displayed_anno = null;
     /////public isPlaying: boolean = false;
     constructor(id='video_player') {   
         this.video = <HTMLVideoElement>document.getElementById(id);
@@ -32,40 +35,13 @@ class VideoController {
         this.peerId = yatta.getUserId();
         console.log('peer id:', this.peerId);
         this.duration = isNaN(this.video.duration) ? 0 : this.video.duration;
-        var intent = {
-            "component": "",
-            "sender": "",
-            "data": "",
-            "dataType": "text/xml",
-            "action": "UPDATE_VIDEO_DURATION",
-            "categories": [],
-            "flags": ["PUBLISH_LOCAL"],
-            "extras": { "duration": this.duration.toString() }
-        };
-
-        if (iwc.util.validateIntent(intent)) {
-            iwcClient.publish(intent);
-            //yatta.getConnector().sendIwcIntent(intent);
-        }
+        if (!isNaN(this.video.duration))
+            locallySendIntent("UPDATE_VIDEO_DURATION", { "duration": this.duration.toString() });        
         
         $(this.video).on("durationchange", ()=> {
             this.duration = this.video.duration;           
             var dur = this.duration;
-            var intent = {
-                "component": "",
-                "sender": "",
-                "data": "",
-                "dataType": "text/xml",
-                "action": "UPDATE_VIDEO_DURATION",
-                "categories": [],
-                "flags": ["PUBLISH_LOCAL"],
-                "extras": { "duration": dur.toString() }
-            };
-            
-            if (iwc.util.validateIntent(intent)) {
-                iwcClient.publish(intent);
-                //yatta.getConnector().sendIwcIntent(intent);
-            }
+            locallySendIntent("UPDATE_VIDEO_DURATION", { "duration": dur.toString() });   
         });
 
 
@@ -98,10 +74,12 @@ class VideoController {
         this.canvas.setHeight(245);
         this.canvas.setWidth(620);
         this.canvas.selection = false; 
-        
-        this.svg_adapter = new Adapter(this.canvas);
-        
-        this.svg_adapter.register_annotation_event(this.on_object_added);
+        try {
+            this.svg_adapter = new Adapter(this.canvas);
+            this.svg_adapter.register_annotation_event(this.on_object_added);
+        } catch (e) {
+            jQuery('#includedContent').append('<h1>Fabric Adapter was not loadad. Reload the page.</h1>');
+        }
 
         jQuery('.canvas-container').css({ 'position': 'absolute' });        
         
@@ -133,7 +111,7 @@ class VideoController {
             var id = this.val('collab_id');
             if (id) {
                 var doc = videoCtr.get_doc_by_id(id);
-                //console.log('collab doc', doc);
+                console.log('collab doc', doc);
                 doc[prop] = this.val(prop);
                 videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
             }   
@@ -143,6 +121,9 @@ class VideoController {
         this.svg_adapter.on_object_moved = this.on_object_changed;
         this.svg_adapter.on_object_rotated = this.on_object_changed;
         this.svg_adapter.on_object_scaled = this.on_object_changed;
+
+        
+        locallySendIntent("I_AM_ALIVE", { widget: 'video_canvas' });
         
     }
 
@@ -340,17 +321,22 @@ class VideoController {
     public display_annotation_at(time = this.video.currentTime, temporal = true, threshold = 0.25) {
 
         var res = this.annotation_at(time);
-        this.canvas.clear();
-        if (!res) return null;
         
-        //if (!this.video.paused) {
+        if (!res) {
+            this.canvas.clear();
+            this.last_displayed_anno = null;
+            return null;
+        }
+        var cacheActive = this.activeDoc;
+       // if (res != this.last_displayed_anno) {
+            this.canvas.clear();
+
+            //if (!this.video.paused) {
             this.canvas.off('object:added');
             if (res.doc instanceof Array) {
                 res.doc.forEach((a) => {
                     try {
-                        /*fabric.util.enlivenObjects([a], (objects)=> {
-                            
-                        });*/
+
                         this.canvas.add(a);
                     }
                     catch (e) {
@@ -362,6 +348,9 @@ class VideoController {
                 this.canvas.add(res.doc);
 
             this.canvas.on('object:added', (a) => { this.svg_adapter.on_object_added(a); });
+      //  }
+
+            
             if (temporal) {
                 this.video.pause();
                 window.setTimeout(() => {
@@ -369,7 +358,10 @@ class VideoController {
                     this.video.play();
                 }, 3000);
             }
-        //}
+        
+        this.last_displayed_anno = res;
+        if(cacheActive)
+            this.canvas.setActiveObject(cacheActive);
         return res;
     }
 
@@ -383,6 +375,13 @@ class VideoController {
     public update_color(color) {
         this.color = color;
         this.canvas.freeDrawingBrush.color = color;
+        var fObj = this.canvas.getActiveObject();  
+        if (fObj) {
+            fObj.setOptions({ stroke: color });
+            this.canvas.renderAll();
+            console.log('fabric color change', fObj);
+            yatta.val(fObj.get('collab_id')).val('doc').val('stroke', color);
+        }
     }
 
     private start_video_observer() {
@@ -449,8 +448,8 @@ class VideoController {
     public make_circle() {
         this.video.pause();
         var circle = new fabric.Circle({
-            left: Math.random() * this.canvas.getWidth(),
-            top: Math.random() * this.canvas.getHeight(),
+            left: Math.random() * this.canvas.getWidth() * 0.8,
+            top: Math.random() * this.canvas.getHeight() * 0.8,
             fill: 'rgba(0,0,0,0)',
             radius: 20,
             strokeWidth: 2,
@@ -463,8 +462,8 @@ class VideoController {
     public make_rect() {
         this.video.pause();
         var rect = new fabric.Rect({
-            left: Math.random() * this.canvas.getWidth(),
-            top: Math.random() * this.canvas.getHeight(),
+            left: Math.random() * this.canvas.getWidth() * 0.8,
+            top: Math.random() * this.canvas.getHeight() * 0.8,
             fill: 'rgba(0,0,0,0)',
             width: 20,
             height: 20,
@@ -539,8 +538,21 @@ function router(intent) {
             break; 
         case 'SET_COLOR':
             videoCtr.update_color(intent.extras.color);
+            break;
+        
+        /************** Check if other widgets are there ***********************/
+        case 'I_AM_ALIVE':
+            if (intent.extras.widget === 'controler') { //if controler widget is loaded after video_canvas
+                videoCtr.annotations.forEach((anno) => {                   
+                    locallySendIntent("NEW_ANNOTATION", { "time": anno.time });
+                });
+                locallySendIntent("UPDATE_VIDEO_DURATION", { "duration": videoCtr.duration.toString() }); 
+
+            }
             break;     
     }
+
+    routerNetwork(intent);
 
 }
 
@@ -548,8 +560,19 @@ function router(intent) {
 iwcClient.connect(router);
 
 
-
-
+function locallySendIntent(action:string, extras= {}) {
+    var intent = {
+        "component": "",
+        "sender": "",
+        "data": "",
+        "dataType": "text/xml",
+        "action": action,
+        "categories": [],
+        "flags": ["PUBLISH_LOCAL"],
+        "extras": extras
+    };
+    iwcClient.publish(intent);
+}
 
 
 /*////////////////
