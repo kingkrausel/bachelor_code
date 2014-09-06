@@ -16,15 +16,22 @@ class VideoInstructionsCtrl {
     public anno_cd_timer = 0;
     public watching_anno = false;
     public color: string;
+    public user_positions: any = {};
+    public isMaster: boolean = false;
+    public awareness_timer: number = 0;
+    public displaying_anno = false;
+    public curr_displayed_anno = -1;
+    public peerId: string;
     constructor() {
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
         this.jSlider.slider();
         this.anno_countdown = this.anno_view_time;
+        this.I_am_alive();
     }
 
     private I_am_alive() {
-        sendIntent('I_AM_ALIVE', {widget:'controls'});
+        locallySendIntent('I_AM_ALIVE', {widget:'controls'});
     }
 
     public play_pause() {
@@ -35,30 +42,7 @@ class VideoInstructionsCtrl {
             this.playing ? this.pause() : this.play();
             this.stop_anno_countdown();
         }
-        /*this.stop_anno_countdown();
-        var intent = {
-            "component": "",
-            "sender": "",
-            "data": "",
-            "dataType": "text/xml",
-            "action": "PLAY/PAUSE",
-            "categories": [],
-            "flags": ["PUBLISH_LOCAL"],
-            "extras": {}
-        };
-        this.playing = !this.playing;
-        //if (this.playing) this.play_btn.text('Pause');
-        //else this.play_btn.text('Play');
-
-        var newClass = !this.playing ? 'fa fa-play' : 'fa fa-pause';
-        //if(this.drawinMode)
-        jQuery('#play_pause i').removeClass();
-        jQuery('#play_pause i').attr('class', newClass);
-
-        if (iwc.util.validateIntent(intent)) {
-            //console.log('intent gesendet!');
-            iwcClient.publish(intent);
-        }*/
+        
     }
 
     public play() {
@@ -67,7 +51,7 @@ class VideoInstructionsCtrl {
         var newClass = !this.playing ? 'fa fa-play' : 'fa fa-pause';
         jQuery('#play_pause i').removeClass();
         jQuery('#play_pause i').attr('class', newClass);
-        sendIntent('PLAY',{});
+        locallySendIntent('PLAY',{});
     }
 
     public pause() {
@@ -77,12 +61,27 @@ class VideoInstructionsCtrl {
         //if(this.drawinMode)
         jQuery('#play_pause i').removeClass();
         jQuery('#play_pause i').attr('class', newClass);
-        sendIntent('PAUSE', {});
+        locallySendIntent('PAUSE', {});
+    }
+
+    public annotation_at(time: number, threshold = 0.25) {
+        var res = -1;
+
+        var dist = 10000000; //works for videos with duration <= 2777h
+        this.annotated_times.forEach((anno_time,index) => {
+            var currDist = Math.abs(anno_time - time);
+            if (currDist < dist && threshold >= currDist) {
+                dist = currDist;
+                res = index;
+            }
+        });
+
+        return res;
     }
 
     public set_color(color) {
         this.color = color;
-        sendIntent('SET_COLOR', { color: color });
+        locallySendIntent('SET_COLOR', { color: color });
     }
 
     public add_annotation_time(anno) {
@@ -137,13 +136,13 @@ class VideoInstructionsCtrl {
 
     public circle() {
         if (this.drawinMode) this.toggle();
-        sendIntent('MAKE_CIRCLE', {});
+        locallySendIntent('MAKE_CIRCLE', {});
         if(this.playing)
             this.pause();
     }
     public rect() {
         if (this.drawinMode) this.toggle()
-        sendIntent('MAKE_RECT', {});
+        locallySendIntent('MAKE_RECT', {});
         if (this.playing)
             this.pause();
     }
@@ -151,16 +150,23 @@ class VideoInstructionsCtrl {
     public update_markers() {
         var max = this.jSlider.slider("option", "max");
         this.jSlider.find('.ui-slider-tick-mark').remove();
-        this.annotated_times.forEach((time,index) => {
-            $('<span class="ui-slider-tick-mark" id="marker_'+index+'"></span>').css('left', (100 * (time / max)) + '%').appendTo(this.jSlider);
-            $('#marker_' + index).attr('data-marker-index',index);
+        this.annotated_times.forEach((time, index) => {
+            //var num_users = this.count_users_at(time);
+            //$('<span class="ui-slider-tick-mark" id="marker_'+index+'"><p>'+num_users+'</p></span>').css('left', (100 * (time / max)) + '%').appendTo(this.jSlider);
+            $('<span class="ui-slider-tick-mark" id="marker_' + index + '"></span>').css('left', (100 * (time / max)) + '%').appendTo(this.jSlider);
+           
+            $('#marker_' + index).attr('data-marker-index', index);
             $('#marker_' + index).click(function () {
                 var index = parseInt( $(this).attr('data-marker-index') );
                 //console.log('collba id is:', id);
                 controller.goto_annotation(index);
             });
         });
+
+        
     }
+
+    
 
     public frame(diff: number) {
         this.video_time += diff;
@@ -171,17 +177,38 @@ class VideoInstructionsCtrl {
 
     }
 
+    public get_index_of_anno(annoTime) {
+        for (var i = 0; i < this.annotated_times.length; i++)
+            if (annoTime == this.annotated_times[i]) return i;
+        return -1;
+    }
+
     public get_updated_time(time: number) {
         this.last_video_time = this.video_time;
         this.video_time = time;
         this.jSlider.slider({ value: time });
         var anno_at = this.get_time_between(this.last_video_time, time);
+        console.log('anno_at',anno_at);
         if (this.playing && anno_at >= 0) {
             this.pause();            
             this.set_video_time(anno_at);
             this.start_anno_countdown();
             this.last_video_time = anno_at;
         }
+
+        this.display_anno_status(time);
+    }
+
+    public display_anno_status(time: number) {
+        var anno_index = this.annotation_at(time);
+        this.displaying_anno = anno_index === -1 ? false : true;
+
+        if (this.curr_displayed_anno != this.annotated_times[anno_index]) {
+            sendIntent('I_AM_AT_ANNO', { peerId: this.peerId, time: time });
+        }
+        
+        this.curr_displayed_anno = anno_index === -1 ? -1 : this.annotated_times[anno_index];
+
     }
 
     public get_time_between(a: number, b: number) {
@@ -253,6 +280,41 @@ class VideoInstructionsCtrl {
 
     }
 
+    public count_users_at(time) {
+        var num_users_at = 0;
+        for (var id in this.user_positions) {
+            if (this.user_positions[id] === time)
+                num_users_at++;
+        }
+        return num_users_at;
+    }
+
+    public get_updated_user_pos(peerId, time) {
+        var oldTime = this.user_positions[peerId];
+        this.user_positions[peerId] = time;
+        if (oldTime !== -1 && oldTime !== undefined) {  
+            var oldIndex = this.get_index_of_anno(oldTime);          
+            var num_users_at = this.count_users_at(oldTime);
+            jQuery('#marker_' + oldIndex + ' p').text(num_users_at);
+        }
+
+        var index = this.get_index_of_anno(time);
+        if (index === -1) return;
+        var num_users_at = this.count_users_at(time);
+
+        jQuery('#marker_' + index + ' p').text(num_users_at);
+    }
+
+    public master_status_changed(isMaster:boolean) {
+        this.isMaster = isMaster;
+        if (this.isMaster) {
+            window.clearInterval(this.awareness_timer);
+            setInterval(() => {
+                console.log('hi');
+            }, 3000);
+        }
+    }
+
 }
 
 var controller:VideoInstructionsCtrl;
@@ -318,6 +380,19 @@ function controller_router(intent) {
                 controller.stop_anno_countdown();
             //}
             break;
+        case 'I_AM_AT_ANNO':
+            //controller.get_updated_user_pos(intent.extras.peerId, intent.extras.time);
+
+            break;
+
+        case 'MASTER_STATUS':
+            controller.master_status_changed(intent.extras.isMaster);
+            break;
+        case 'JOIN_NETWORK':
+            //controller.master_status_changed(intent.extras.isMaster);
+            //TODO: only master boradcasts data
+            sendIntent('I_AM_AT_ANNO', { peerId: controller.peerId, time: controller.curr_displayed_anno });
+            break;
 
         /************** Check if other widgets are there ***********************/
         case 'I_AM_ALIVE':
@@ -326,12 +401,33 @@ function controller_router(intent) {
                 controller.jSlider.slider({ value: 0 });
             }
             break;
+        case 'PEER_ID':
+            controller.peerId = intent.extras.peerId;
+            break;
     }
 
 }
 
 
 iwcClient.connect(controller_router);
+
+function locallySendIntent(action, data) {
+    var intent = {
+        "component": "",
+        "sender": "",
+        "data": "",
+        "dataType": "text/xml",
+        "action": action,
+        "categories": [],
+        "flags": ["PUBLISH_LOCAL"],
+        "extras": data
+    };
+
+    if (iwc.util.validateIntent(intent)) {
+        iwcClient.publish(intent);
+        //yatta.getConnector().sendIwcIntent(intent);
+    }
+}
 
 function sendIntent(action, data) {
     var intent = {
@@ -341,7 +437,7 @@ function sendIntent(action, data) {
         "dataType": "text/xml",
         "action": action,
         "categories": [],
-        "flags": ["PUBLISH_LOCAL"],
+        "flags": ["PUBLISH_GLOBAL"],
         "extras": data
     };
 

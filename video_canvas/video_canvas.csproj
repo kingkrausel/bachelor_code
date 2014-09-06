@@ -24,6 +24,8 @@
     <Content Include="config.js" />
     <Content Include="controls.css" />
     <TypeScriptCompile Include="svg_adapter.ts" />
+    <Content Include="lib\fabric.min.js" />
+    <Content Include="networkCtr.ts" />
     <Content Include="OpenCoweb-jsoe\config_OUT.js" />
     <Content Include="OpenCoweb-jsoe\jsoe\ContextDifference.js" />
     <Content Include="OpenCoweb-jsoe\jsoe\ContextVector.js" />
@@ -69,7 +71,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="css\" />
-    <Folder Include="lib\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

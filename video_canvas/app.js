@@ -1,9 +1,9 @@
-/// <reference path="networkCtr.ts" />
+﻿/// <reference path="networkCtr.ts" />
 /// <reference path="svg_adapter.ts" />
 /// <reference path="definitions/jquery.d.ts" />
 /// <reference path="definitions/fabricjs.d.ts" />
 //var XML_TEST = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">    < svg xmlns = "http://www.w3.org/2000/svg" xmlns: xlink = "http://www.w3.org/1999/xlink" version = "1.1" width = "640" height = "480" xml: space = "preserve" > <desc>Created with Fabric.js 1.4.0 < /desc><defs></defs ><g transform = "translate(196 106)" ><path d = "M 54.5 9 Q 54.5 9 55 9 Q 55.5 9 55.25 9 Q 55 9 53.5 8 Q 52 7 50.5 6 Q 49 5 47 4.5 Q 45 4 43 3.5 Q 41 3 38.5 3 Q 36 3 34.5 2.5 Q 33 2 32 1.5 Q 31 1 30.5 0.5 Q 30 0 28 0 Q 26 0 25 0 Q 24 0 21.5 0.5 Q 19 1 18 1.5 Q 17 2 15.5 3 Q 14 4 13 4.5 Q 12 5 10 7.5 Q 8 10 7.5 11 Q 7 12 5 15.5 Q 3 19 2.5 20.5 Q 2 22 2 23.5 Q 2 25 1 29.5 Q 0 34 0 35.5 Q 0 37 0 40.5 Q 0 44 0 45.5 Q 0 47 0 50 Q 0 53 0 54.5 Q 0 56 0 56.5 Q 0 57 0.5 59 Q 1 61 1 62.5 Q 1 64 1.5 66 Q 2 68 3 69 Q 4 70 5 72 Q 6 74 7 74.5 Q 8 75 9.5 76.5 Q 11 78 11.5 78.5 Q 12 79 13 79.5 Q 14 80 16 81 Q 18 82 18.5 82 Q 19 82 20 82 Q 21 82 22 82 Q 23 82 25 82 Q 27 82 28 82 Q 29 82 30.5 82 Q 32 82 32.5 82 Q 33 82 34.5 81 Q 36 80 37 79.5 Q 38 79 38.5 78.5 Q 39 78 41 77 Q 43 76 43.5 75.5 Q 44 75 45 74 Q 46 73 47 72.5 Q 48 72 49.5 71 Q 51 70 51.5 69 Q 52 68 52.5 68 Q 53 68 54 67 Q 55 66 55.5 65 Q 56 64 56 63.5 Q 56 63 57.5 61 Q 59 59 59.5 58 Q 60 57 61 54.5 Q 62 52 62.5 51 Q 63 50 63 49 Q 63 48 64 47 Q 65 46 65 45 Q 65 44 65 43.5 Q 65 43 65.5 39 Q 66 35 66 33.5 Q 66 32 66 29 Q 66 26 66 25.5 Q 66 25 66 24 Q 66 23 65.5 23 Q 65 23 64.5 22.5 Q 64 22 64 21.5 Q 64 21 63.5 21 Q 63 21 62.5 21 Q 62 21 61.5 20.5 Q 61 20 60.5 19.5 Q 60 19 59.5 18.5 Q 59 18 58 17.5 Q 57 17 56.5 16.5 Q 56 16 55 15 Q 54 14 53.5 13 Q 53 12 52.5 11.5 Q 52 11 52 10 Q 52 9 51.5 9 Q 51 9 50.5 8.5 Q 50 8 49.5 7 Q 49 6 48.5 4.5 Q 48 3 47.5 3 Q 47 3 46.5 3 L 46 3" style = "stroke: rgb(0, 0, 0); stroke-width: 1; stroke-dasharray: ; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10; fill: none; opacity: 1;" transform = "translate(-33 -41)" stroke - linecap ="round" / ></g></svg >';
-var XML_TEST = '<svg height="100" width="100">< circle cx = "50" cy = "50" r = "40" stroke = "black" stroke-width = "3" fill ="red" /></svg>';
+var XML_TEST = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>    < svg id = "svg2816" xmlns: rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns = "http://www.w3.org/2000/svg" viewBox = "0 0 48 48" version = "1.1" xmlns: cc = "http://creativecommons.org/ns#" xmlns: dc = "http://purl.org/dc/elements/1.1/" > <defs id = "defs2818" >< / defs > <metadata id = "metadata2821" >  <rdf:RDF>   <cc:Work rdf: about = "" >    <dc:format > image / svg + xml </dc:format >    <dc:type rdf: resource ="http://purl.org/dc/dcmitype/StillImage"/ >    <dc:title/ >   </cc:Work >  </rdf:RDF > < / metadata > <g id = "layer1" stroke - linejoin = "miter" stroke = "#ce3762" stroke - linecap = "butt" >  <path id = "path2828" style = "stroke-dasharray:none;" d = "M40,3,35,3,20,18,10,18s-5,5,0,10h10l15,15h5v-40z" transform = "translate(-5,0)" stroke - miterlimit = "4" stroke - width = "0.5" fill ="#42101e"/ >  <path id = "path2830" d = "m37,13s2,7.5359,0,15" transform = "translate(0,2)" stroke - width = "1px" fill ="none"/ >  <path id = "path2834" d = "m40,11s3,10,0,19" transform = "translate(0,2)" stroke - width = "1px" fill ="none"/ >  <path id = "path2836" d = "m43,6s6,14,0,29" transform = "translate(0,2)" stroke - width = "1px" fill ="none"/ > < / g >< / svg >';
 
 var VideoController = (function () {
     /////public isPlaying: boolean = false;
@@ -19,6 +19,7 @@ var VideoController = (function () {
         this.color = 'black';
         this.activeDoc = null;
         this.last_displayed_anno = null;
+        this.curr_anno = null;
         this.video = document.getElementById(id);
         this.start_video_observer();
 
@@ -63,7 +64,7 @@ var VideoController = (function () {
         });
         this.canvas.setHeight(245);
         this.canvas.setWidth(620);
-        this.canvas.selection = false;
+        this.canvas.selection = true;
         try  {
             this.svg_adapter = new Adapter(this.canvas);
             this.svg_adapter.register_annotation_event(this.on_object_added);
@@ -73,8 +74,13 @@ var VideoController = (function () {
 
         jQuery('.canvas-container').css({ 'position': 'absolute' });
 
-        fabric.loadSVGFromURL("http://golovin.de/ba/video_canvas/svg/1.svg", function (objects, options) {
-            //this.canvas.add(objects[0]);
+        fabric.loadSVGFromURL("http://golovin.de/ba/media/1.svg", function (objects, options) {
+            /*setTimeout(() => {
+            var loadedObjects = objects[0];
+            videoCtr.canvas.add(loadedObjects);
+            videoCtr.canvas.renderAll();
+            }, 2000);
+            //*/
             //this.annotations.push({ doc: objects[0], time: 5.0 });
             //this.svg_docs[5.0] = objects[0];
             //console.log(this.svg_docs);
@@ -112,6 +118,8 @@ var VideoController = (function () {
         this.svg_adapter.on_object_scaled = this.on_object_changed;
 
         locallySendIntent("I_AM_ALIVE", { widget: 'video_canvas' });
+        locallySendIntent("PEED_ID", { peerId: this.peerId });
+        networkCtrl.joinNetwork(this.peerId);
     }
     VideoController.prototype.set_video_time = function (time) {
         // if (!this.video.paused) this.play_pause();
@@ -120,6 +128,7 @@ var VideoController = (function () {
     };
 
     VideoController.prototype.on_object_added = function (object) {
+        console.log('fabric added:', object);
         var id = videoCtr.peerId + '_' + videoCtr.fabricCounter++;
         object.set('collab_id', id);
 
@@ -208,6 +217,7 @@ var VideoController = (function () {
             } else {
                 curr_anno.doc.push(jQuery.extend(true, {}, anno.doc)); //cloning is important, since objs get destroyed if not displayed
             }
+            this.display_annotation_at(this.video.currentTime, false);
         } else
             fabric.util.enlivenObjects([anno.doc], function (objects) {
                 anno.doc = objects[0];
@@ -287,16 +297,24 @@ var VideoController = (function () {
         return res;
     };
 
+    /* public i_am_at_anno() {
+    var time = this.curr_anno ? this.curr_anno.time : -1;
+    networkCtrl.sendIntent('I_AM_AT_ANNO', [], {peerId: this.peerId, time: time});
+    }*/
     VideoController.prototype.display_annotation_at = function (time, temporal, threshold) {
         if (typeof time === "undefined") { time = this.video.currentTime; }
         if (typeof temporal === "undefined") { temporal = true; }
         if (typeof threshold === "undefined") { threshold = 0.25; }
         var _this = this;
         var res = this.annotation_at(time);
+        this.last_displayed_anno = this.curr_anno;
+        this.curr_anno = res;
 
+        /*if (this.curr_anno !== this.last_displayed_anno) {
+        this.i_am_at_anno();
+        }*/
         if (!res) {
             this.canvas.clear();
-            this.last_displayed_anno = null;
             return null;
         }
         var cacheActive = this.activeDoc;
@@ -318,7 +336,7 @@ var VideoController = (function () {
             this.canvas.add(res.doc);
 
         this.canvas.on('object:added', function (a) {
-            _this.svg_adapter.on_object_added(a);
+            _this.svg_adapter.on_object_added(a.target);
         });
 
         //  }
@@ -330,7 +348,6 @@ var VideoController = (function () {
             }, 3000);
         }
 
-        this.last_displayed_anno = res;
         if (cacheActive)
             this.canvas.setActiveObject(cacheActive);
         return res;
@@ -357,29 +374,6 @@ var VideoController = (function () {
 
     VideoController.prototype.start_video_observer = function () {
         var _this = this;
-        /*window.setInterval(() => {
-        if (this.last_video_time == this.video.currentTime) return;
-        
-        this.display_annotation_at(this.video.currentTime, !this.video.paused);
-        
-        var intent = {
-        "component": "",
-        "sender": "",
-        "data": "",
-        "dataType": "text/xml",
-        "action": "UPDATE_VIDEO_TIME",
-        "categories": [],
-        "flags": ["PUBLISH_LOCAL"],
-        "extras": { "time": this.video.currentTime.toString() }
-        };
-        
-        if (iwc.util.validateIntent(intent)) {
-        console.log('send time intent');
-        iwcClient.publish(intent);
-        //yatta.getConnector().sendIwcIntent(intent);
-        }
-        this.last_video_time = this.video.currentTime;
-        }, 500);*/
         this.video_observer_timer = window.setInterval(function () {
             if (_this.video.paused)
                 return;
@@ -395,7 +389,7 @@ var VideoController = (function () {
                     "action": "UPDATE_VIDEO_TIME",
                     "categories": [],
                     "flags": ["PUBLISH_LOCAL"],
-                    "extras": { "time": _this.video.currentTime.toString() }
+                    "extras": { "time": _this.video.currentTime }
                 };
 
                 if (iwc.util.validateIntent(intent)) {
@@ -448,6 +442,13 @@ var VideoController = (function () {
     return VideoController;
 })();
 
+function sleep(milliseconds) {
+    var start = new Date().getTime();
+
+    while ((new Date().getTime() - start) < milliseconds)
+        ;
+}
+
 var videoCtr;
 
 videoCtr = new VideoController();
@@ -472,6 +473,9 @@ function router(intent) {
             break;
         case 'TOGGLE':
             videoCtr.toggle();
+            break;
+        case 'ACTION_OPEN':
+            videoCtr.video.src = intent.data;
             break;
 
         case 'COLL_WRITE':
@@ -506,12 +510,16 @@ function router(intent) {
             break;
 
         case 'I_AM_ALIVE':
-            if (intent.extras.widget === 'controler') {
+            if (intent.extras.widget === 'controls') {
                 videoCtr.annotations.forEach(function (anno) {
                     locallySendIntent("NEW_ANNOTATION", { "time": anno.time });
                 });
                 locallySendIntent("UPDATE_VIDEO_DURATION", { "duration": videoCtr.duration.toString() });
+                locallySendIntent("PEED_ID", { "peerId": videoCtr.peerId });
             }
+            break;
+
+        case 'JOIN_NETWORK':
             break;
     }
 

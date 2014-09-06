@@ -3,7 +3,7 @@ var NetworkController = (function () {
         this.isMaster = false;
         this.masterAbilityScore = 0;
         this.masterAlive = false;
-        this.masterPingTime = 10 * 1000;
+        this.masterPingTime = 5 * 1000;
         this.waitForMasterPing = this.masterPingTime * 2;
         this.timerID = 0;
         this.masterPingTimerID = 0;
@@ -48,6 +48,8 @@ var NetworkController = (function () {
 
     NetworkController.decideToBecomeMaster = function () {
         clearInterval(networkCtrl.masterPingTimerID); // in case some sync errors occured
+        console.log('make decision:', networkCtrl.shouldBecomeMaster);
+        var wasMaster = networkCtrl.isMaster;
         networkCtrl.isMaster = false;
         if (networkCtrl.shouldBecomeMaster) {
             networkCtrl.isMaster = true;
@@ -55,6 +57,9 @@ var NetworkController = (function () {
             networkCtrl.masterPingTimerID = setInterval(function () {
                 networkCtrl.sendIntent('MASTER_IS_ALIVE');
             }, networkCtrl.masterPingTime); // and keep being it!
+        }
+        if (wasMaster !== networkCtrl.isMaster) {
+            networkCtrl.locallySendIntent('MASTER_STATUS', { isMaster: networkCtrl.isMaster });
         }
     };
 
@@ -80,6 +85,25 @@ var NetworkController = (function () {
         } else
             console.error('Invalid intent!');
     };
+
+    NetworkController.prototype.locallySendIntent = function (action, extras) {
+        if (typeof extras === "undefined") { extras = {}; }
+        var intent = {
+            "component": "",
+            "sender": "",
+            "data": "",
+            "dataType": "text/xml",
+            "action": action,
+            "categories": [],
+            "flags": ["PUBLISH_LOCAL"],
+            "extras": extras
+        };
+        iwcClient.publish(intent);
+    };
+
+    NetworkController.prototype.joinNetwork = function (id) {
+        this.sendIntent('JOIN_NETWORK', [], { id: id });
+    };
     return NetworkController;
 })();
 
@@ -90,6 +114,7 @@ function routerNetwork(intent) {
         case 'UPDATE_MASTER_DEVICE':
             if (networkCtrl.masterAbilityScore !== intent.extras.score || networkCtrl.randomOnScoreCollision !== intent.extras.onCollision) {
                 // if nobody before proofed to be better master and current score is also smaller -> become master
+                console.log('Contention phase, currently comapring profiles.');
                 if (networkCtrl.masterAbilityScore > intent.extras.score && networkCtrl.shouldBecomeMaster)
                     networkCtrl.shouldBecomeMaster = true;
 
@@ -98,8 +123,10 @@ function routerNetwork(intent) {
                     networkCtrl.shouldBecomeMaster = false;
 
                 // we are currently the best option, but somebody else is also good. Decide by random numbers.
-                if (networkCtrl.masterAbilityScore == intent.extras.score && networkCtrl.shouldBecomeMaster)
-                    networkCtrl.shouldBecomeMaster = networkCtrl.randomOnScoreCollision > intent.extras.OnCollision ? true : false;
+                if (networkCtrl.masterAbilityScore == intent.extras.score && networkCtrl.shouldBecomeMaster) {
+                    networkCtrl.shouldBecomeMaster = (networkCtrl.randomOnScoreCollision > intent.extras.onCollision) ? true : false;
+                    console.log('Same device score, checking random numbers:', networkCtrl.randomOnScoreCollision, intent.extras.onCollision, networkCtrl.shouldBecomeMaster);
+                }
             }
             break;
         case 'MASTER_IS_ALIVE':

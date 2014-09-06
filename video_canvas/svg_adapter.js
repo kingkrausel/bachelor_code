@@ -7,7 +7,16 @@ var Adapter = (function () {
         this.canvas = canvas;
 
         this.canvas.on("object:added", function (a) {
-            _this.on_object_added(a);
+            console.log("fabric added", a);
+
+            /*if (a.target.getObjects !== undefined) {
+            a.target.getObjects().forEach((obj) => {
+            console.log("fabric added", obj);
+            this.on_object_added(obj);
+            });
+            }
+            else*/
+            _this.on_object_added(a.target);
             /*console.log("fabric added object", a.target);
             console.log("fabric instance of f.Obj:", a.target instanceof fabric.Object);*/
             //
@@ -26,13 +35,15 @@ var Adapter = (function () {
         });
 
         this.canvas.on("object:moving", function (a) {
-            if (a.target instanceof fabric.Group) {
-                a.target.objects.forEach(function (obj) {
-                    console.log("fabric moving", obj);
-                    _this.on_object_moved(obj, "object:moving");
-                });
-            } else
-                _this.on_object_moved(a.target, "object:moving");
+            /*console.log("fabric moved", a);
+            if (a.target.getObjects !== undefined) {
+            a.target.getObjects().forEach((obj) => {
+            console.log("fabric moved", obj);
+            this.on_object_moved(a.target, "object:moving");
+            });
+            }
+            else*/
+            _this.on_object_moved(a.target, "object:moving");
             /*var s = Snap('#' + a.target.id);
             //console.log('moved object', s);
             var myMatrix = new Snap.Matrix();
@@ -106,14 +117,12 @@ var Adapter = (function () {
     };
 
     Adapter.prototype.on_object_added = function (a) {
-        var object = a.target;
-
         //console.log('object:added', object);
         //object.id = this.make_id();
         //console.log('hier is was', this.on_annotation);
         //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
         //this.on_annotation(this.canvas.getObjects());
-        this.on_annotation(object);
+        this.on_annotation(a);
         //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2');
         /*var svg = object.toSVG();
         //console.log($(svg).attr('id','joman'));

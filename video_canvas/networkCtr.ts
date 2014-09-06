@@ -2,7 +2,7 @@ class NetworkController {
     public isMaster: boolean = false;
     public masterAbilityScore = 0;
     private masterAlive = false;
-    public masterPingTime = 10 * 1000; //Master pings every 10 secs to validate that he is alive
+    public masterPingTime = 5 * 1000; //Master pings every 10 secs to validate that he is alive
     public waitForMasterPing = this.masterPingTime * 2;
     private timerID = 0;
     public masterPingTimerID = 0;
@@ -50,12 +50,19 @@ class NetworkController {
 
     public static decideToBecomeMaster() {
         clearInterval(networkCtrl.masterPingTimerID); // in case some sync errors occured
+        console.log('make decision:', networkCtrl.shouldBecomeMaster);
+        var wasMaster = networkCtrl.isMaster;
         networkCtrl.isMaster = false;
         if (networkCtrl.shouldBecomeMaster) {
             networkCtrl.isMaster = true;
             networkCtrl.sendIntent('MASTER_IS_ALIVE');//shout out that we are the new master! (Hopefully we are in time...)
             networkCtrl.masterPingTimerID = setInterval(() => { networkCtrl.sendIntent('MASTER_IS_ALIVE'); }, networkCtrl.masterPingTime); // and keep being it!
+
         }
+        if (wasMaster !== networkCtrl.isMaster) { //Master-status changed, inform all local widgets
+            networkCtrl.locallySendIntent('MASTER_STATUS', { isMaster: networkCtrl.isMaster });
+        }
+
     }
 
 
@@ -79,6 +86,24 @@ class NetworkController {
             iwcClient.publish(intent);
         } else console.error('Invalid intent!');
     }
+
+    public locallySendIntent(action: string, extras= {}) {
+        var intent = {
+            "component": "",
+            "sender": "",
+            "data": "",
+            "dataType": "text/xml",
+            "action": action,
+            "categories": [],
+            "flags": ["PUBLISH_LOCAL"],
+            "extras": extras
+        };
+        iwcClient.publish(intent);
+    }
+
+    public joinNetwork(id) {
+        this.sendIntent('JOIN_NETWORK', [], {id:id});
+    }
 } 
 
 var networkCtrl = new NetworkController();
@@ -89,16 +114,19 @@ function routerNetwork(intent) { //called in app.js
             if (networkCtrl.masterAbilityScore !== intent.extras.score
                 || networkCtrl.randomOnScoreCollision !== intent.extras.onCollision) { //sender was not me
                     // if nobody before proofed to be better master and current score is also smaller -> become master
+                    console.log('Contention phase, currently comapring profiles.');
                     if (networkCtrl.masterAbilityScore > intent.extras.score && networkCtrl.shouldBecomeMaster)
                         networkCtrl.shouldBecomeMaster = true; 
                     
                     // this one is better master than we, don't become master 
                     if (networkCtrl.masterAbilityScore < intent.extras.score)
                         networkCtrl.shouldBecomeMaster = false;
-                     
+
                     // we are currently the best option, but somebody else is also good. Decide by random numbers.
-                    if (networkCtrl.masterAbilityScore == intent.extras.score && networkCtrl.shouldBecomeMaster)
-                        networkCtrl.shouldBecomeMaster = networkCtrl.randomOnScoreCollision > intent.extras.OnCollision ? true : false;
+                    if (networkCtrl.masterAbilityScore == intent.extras.score && networkCtrl.shouldBecomeMaster) {
+                        networkCtrl.shouldBecomeMaster = (networkCtrl.randomOnScoreCollision > intent.extras.onCollision) ? true : false;
+                        console.log('Same device score, checking random numbers:', networkCtrl.randomOnScoreCollision, intent.extras.onCollision, networkCtrl.shouldBecomeMaster);
+                    }
 
             }
                 break;

@@ -24,7 +24,15 @@ class Adapter {
         this.canvas = canvas;
         
         this.canvas.on("object:added", (a) => {
-            this.on_object_added(a);
+            console.log("fabric added", a);
+            /*if (a.target.getObjects !== undefined) {
+                a.target.getObjects().forEach((obj) => {
+                    console.log("fabric added", obj);
+                    this.on_object_added(obj);
+                });
+            }
+            else*/
+            this.on_object_added(a.target);
             /*console.log("fabric added object", a.target);
             console.log("fabric instance of f.Obj:", a.target instanceof fabric.Object);*/
             //
@@ -44,13 +52,14 @@ class Adapter {
         
         this.canvas.on("object:moving", (a) => {
             
-            if (a.target instanceof fabric.Group) {
-                a.target.objects.forEach((obj) => {
-                    console.log("fabric moving", obj);
-                    this.on_object_moved(obj, "object:moving");
+            /*console.log("fabric moved", a);
+            if (a.target.getObjects !== undefined) {
+                a.target.getObjects().forEach((obj) => {
+                    console.log("fabric moved", obj);
+                    this.on_object_moved(a.target, "object:moving");
                 });
             }
-            else
+            else*/
                 this.on_object_moved(a.target, "object:moving");
             
             /*var s = Snap('#' + a.target.id);
@@ -121,13 +130,12 @@ class Adapter {
     }
 
     public on_object_added(a) {
-        var object = a.target;
         //console.log('object:added', object);
         //object.id = this.make_id();
         //console.log('hier is was', this.on_annotation);
         //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
         //this.on_annotation(this.canvas.getObjects());
-        this.on_annotation(object);
+        this.on_annotation(a);
 
         //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2');
         /*var svg = object.toSVG();
@@ -176,7 +184,9 @@ class Adapter {
                 }
                 if (typeof a[prop] === 'object'
                     || typeof a[prop] === 'array') {
-                        if (JSON.stringify(a[prop]) !== JSON.stringify(b[prop])) callback(prop);
+                        
+                            if (JSON.stringify(a[prop]) !== JSON.stringify(b[prop])) callback(prop);
+                        
                 }
             }
         }
