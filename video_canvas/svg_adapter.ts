@@ -16,20 +16,54 @@ class Adapter {
         }
 
     }
+    public on_object_moved: (doc: fabric.IObject, event: string) => void;
+    public on_object_rotated: (doc: fabric.IObject, event: string) => void;
+    public on_object_scaled: (doc: fabric.IObject, event: string) => void;
     private on_annotation: (doc) => void;
     constructor(canvas: fabric.ICanvas) {
         this.canvas = canvas;
-
+        
         this.canvas.on("object:added", (a) => {
-            this.on_object_added(a);
+            console.log("fabric added", a);
+            /*if (a.target.getObjects !== undefined) {
+                a.target.getObjects().forEach((obj) => {
+                    console.log("fabric added", obj);
+                    this.on_object_added(obj);
+                });
+            }
+            else*/
+            this.on_object_added(a.target);
+            /*console.log("fabric added object", a.target);
+            console.log("fabric instance of f.Obj:", a.target instanceof fabric.Object);*/
             //
         });
 
         this.canvas.on("object:removed", (a) => {
             //jQuery('#'+a.id).remove();
         });
+
+        this.canvas.on("object:selected", (a) => {
+            videoCtr.activeDoc = a.target;
+        });
+
+        this.canvas.on("selection:cleared", (a) => {
+            videoCtr.activeDoc = null;
+        });
+
+        this.canvas.on("object:modified", (a) => { console.log('object:modified'); });
         
         this.canvas.on("object:moving", (a) => {
+            
+            /*console.log("fabric moved", a);
+            if (a.target.getObjects !== undefined) {
+                a.target.getObjects().forEach((obj) => {
+                    console.log("fabric moved", obj);
+                    this.on_object_moved(a.target, "object:moving");
+                });
+            }
+            else*/
+                this.on_object_moved(a.target, "object:moving");
+            
             /*var s = Snap('#' + a.target.id);
             //console.log('moved object', s);
             var myMatrix = new Snap.Matrix();
@@ -49,6 +83,7 @@ class Adapter {
         });
 
         this.canvas.on("object:scaling", (a) => {
+            this.on_object_scaled(a.target, "object:scaling");
             /*var s = Snap('#' + a.target.id);
             console.log('scaled object', a.target);
             var myMatrix = new Snap.Matrix();
@@ -66,6 +101,7 @@ class Adapter {
         });
 
         this.canvas.on("object:rotating", (a) => {
+            this.on_object_rotated(a.target, "object:rotating");
             /*var s = Snap('#' + a.target.id);
             console.log('rotated object', a.target);
             var myMatrix = new Snap.Matrix();
@@ -96,21 +132,20 @@ class Adapter {
     }
 
     public on_object_added(a) {
-        var object = a.target;
         //console.log('object:added', object);
-        object.id = this.make_id();
+        //object.id = this.make_id();
         //console.log('hier is was', this.on_annotation);
         //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
         //this.on_annotation(this.canvas.getObjects());
-        this.on_annotation(object);
+        this.on_annotation(a);
 
         //console.log('added a new object to canvas jungeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2');
-        var svg = object.toSVG();
+        /*var svg = object.toSVG();
         //console.log($(svg).attr('id','joman'));
         this.svg.append($(svg).attr('id', this.make_id()));
         this.counter++;
         //console.log(this.canvas.toSVG());
-        $("svg").html($("svg").html());
+        $("svg").html($("svg").html());*/
     }
 
     public make_id(id= this.counter) {
@@ -135,6 +170,27 @@ class Adapter {
             this.svg.append(object.toSVG());
             console.log(this.canvas.toSVG());
             $("svg").html($("svg").html());*/
+        }
+    }
+
+    public instance_of_fabric_obj() {
+    }
+
+    public handle_diverged_props(a, b, callback) {
+        for (var prop in a) {
+            if (typeof a[prop] !== 'function') { //ignore functions
+                if (typeof a[prop] === 'string'
+                    || typeof a[prop] === 'number'
+                    || typeof a[prop] === 'boolean') {
+                        if (a[prop] !== b[prop]) callback(prop);
+                }
+                if (typeof a[prop] === 'object'
+                    || typeof a[prop] === 'array') {
+                        
+                            if (JSON.stringify(a[prop]) !== JSON.stringify(b[prop])) callback(prop);
+                        
+                }
+            }
         }
     }
 }

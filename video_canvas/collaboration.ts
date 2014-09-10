@@ -68,10 +68,10 @@ class Collaboration {
     constructor(id) {
         this.ote = new OTENGINE(id);
         //this.syncTimer = setInterval(this.engineSyncOutbound, this.SYNC_INTERVAL);
-        this.purgeTimer = setInterval(this.onPurgeEngine, this.PURGE_INTERVAL);
+        //this.purgeTimer = setInterval(this.onPurgeEngine, this.PURGE_INTERVAL);
 
-        this.start_collaboration();
-        this.actionbuffer = [];        
+        //this.start_collaboration();
+        //this.actionbuffer = [];        
 
         /*openapp.resource.get(openapp.param.space(), (s) => {
             this.context = s;
@@ -86,18 +86,35 @@ class Collaboration {
     }
 
     public prepareForYatta(elem: fabric.IObject) {
-        var res = <any>JSON.stringify(elem);
-        res = JSON.parse(res);
-        for (var key in res) {
+        
+        var json = elem.toJSON(['collab_id']);
+        //delete res.path;
+        for (var key in elem) {
 
-            if (res[key] != null && typeof res[key] !== 'string') {
-                res[key] = JSON.stringify( res[key]);
+            if (json[key] === null /*&& (typeof res[key] === 'boolean' || typeof res[key] === 'object')*/) {
+                json[key] = 'null';
             }            
         }
-        console.log('collab prepareForYatta:', res);
+        console.log('collab prepareForYatta:', json);
 
-        return res;
+        return json;
     }
+
+    public unpackFromYatta(json: any) {
+
+        
+        //delete res.path;
+        for (var key in json) {
+
+            if (json[key] === 'null' ) {
+                json[key] = null;
+            }
+        }
+
+        return json;
+    }
+
+
 
 /**
 Initialize:

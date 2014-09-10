@@ -1,4 +1,4 @@
-/// <reference path="definitions/fabricjs.d.ts" />
+﻿/// <reference path="definitions/fabricjs.d.ts" />
 
 var OTENGINE;
 
@@ -38,12 +38,10 @@ var Collaboration = (function () {
         this.shouldPurge = false;
         this.shouldSync = false;
         this.ote = new OTENGINE(id);
-
         //this.syncTimer = setInterval(this.engineSyncOutbound, this.SYNC_INTERVAL);
-        this.purgeTimer = setInterval(this.onPurgeEngine, this.PURGE_INTERVAL);
-
-        this.start_collaboration();
-        this.actionbuffer = [];
+        //this.purgeTimer = setInterval(this.onPurgeEngine, this.PURGE_INTERVAL);
+        //this.start_collaboration();
+        //this.actionbuffer = [];
         /*openapp.resource.get(openapp.param.space(), (s) => {
         this.context = s;
         openapp.resource.get(openapp.param.user(), (u) => {
@@ -56,16 +54,26 @@ var Collaboration = (function () {
         });*/
     }
     Collaboration.prototype.prepareForYatta = function (elem) {
-        var res = JSON.stringify(elem);
-        res = JSON.parse(res);
-        for (var key in res) {
-            if (res[key] != null && typeof res[key] !== 'string') {
-                res[key] = JSON.stringify(res[key]);
+        var json = elem.toJSON(['collab_id']);
+
+        for (var key in elem) {
+            if (json[key] === null) {
+                json[key] = 'null';
             }
         }
-        console.log('collab prepareForYatta:', res);
+        console.log('collab prepareForYatta:', json);
 
-        return res;
+        return json;
+    };
+
+    Collaboration.prototype.unpackFromYatta = function (json) {
+        for (var key in json) {
+            if (json[key] === 'null') {
+                json[key] = null;
+            }
+        }
+
+        return json;
     };
 
     /**
