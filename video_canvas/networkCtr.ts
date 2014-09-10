@@ -106,7 +106,7 @@ class NetworkController {
     }
 } 
 
-var networkCtrl = new NetworkController();
+//var networkCtrl = new NetworkController();
 
 function routerNetwork(intent) { //called in app.js
     switch (intent.action) {

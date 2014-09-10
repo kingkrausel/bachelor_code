@@ -14,6 +14,7 @@ class VideoController {
     public duration: number;
     public canvas: fabric.ICanvas; 
     public annotations = [];
+    public video_anno_map = {};
     public svg_adapter: Adapter;
     public peerId: string;
     public collabPeerIds: string[] = [];
@@ -74,7 +75,7 @@ class VideoController {
         });
         this.canvas.setHeight(245);
         this.canvas.setWidth(620);
-        this.canvas.selection = true; 
+        this.canvas.selection = false; 
         try {
             this.svg_adapter = new Adapter(this.canvas);
             this.svg_adapter.register_annotation_event(this.on_object_added);
@@ -101,23 +102,65 @@ class VideoController {
         yatta.on('addProperty', (e, prop:string) => {
             //
             console.log('collab addProperty triggered', prop);
-            if (prop.indexOf(this.peerId) === -1) {//not my object               
-                    var anno = yatta.val(prop).val();
+            if (prop.indexOf(this.peerId) === -1 && prop.indexOf('//:') === -1) {//not my object and not url              
+                for (var url in yatta.val()) {
+                    if (yatta.val(url).val(prop) !== undefined) {
+                        var anno = yatta.val(url).val(prop).val();
+                        anno.doc = collab.unpackFromYatta(anno.doc);
+                        console.log('collab received anno and unpacked', anno);
+                        if (this.video.src === url) {
+                            this.update_anno(anno);
+                            this.display_annotation_at(this.video.currentTime, false);
+                            //break;
+                        }
+                        else {
+                            fabric.util.enlivenObjects([anno.doc], (objects) => {
+                                anno.doc = objects[0];
+                                this.video_anno_map[url] = this.video_anno_map[url] ? this.video_anno_map[url] : [];
+                                var curr_anno = this.annotation_at(anno.time, url);
+
+                                if (!curr_anno) {
+                                    this.video_anno_map[url].push({ time: anno.time, doc: [jQuery.extend(true, {}, anno.doc)] });
+                                }
+                                else {
+                                    curr_anno.doc.push(jQuery.extend(true, {}, anno.doc)); //cloning is important, since objs get destroyed if not displayed                            
+                                } 
+                            });
+
+                            this.video_anno_map[url].sort((a, b) => { return a.time - b.time; });
+                            
+                                                       
+                        }  
+                    }
+                }
+                
+                 /* var anno = yatta.val(prop).val();
                     anno.doc = collab.unpackFromYatta(anno.doc);
                     console.log('collab received anno and unpacked', anno);
                     this.update_anno(anno);
-                    this.display_annotation_at(this.video.currentTime, false);                                  
+                    this.display_annotation_at(this.video.currentTime, false);    */                              
                
             }
         });
 
         yatta.on('change', function (e, prop: string) {
-            if (prop.indexOf(this.peerId) !== -1) return;
+            if (prop.indexOf('//:') !== -1 ) return; // url
             //console.log('collab Property change was triggered', this);
             var id = this.val('collab_id');
             if (id) {
                 var doc = videoCtr.get_doc_by_id(id);
-                console.log('collab doc', doc);
+                console.log('collab doc', this);
+               /* if (doc[prop] !== this.val(prop)) { //remote change or nearly euqivalent numbers
+
+                    if (typeof this.val(prop) === 'number') {
+                        if (Math.floor(this.val(prop)) === Math.floor(doc[prop])) {
+                            console.log('collab doc, change ', doc[prop], 'to', this.val(prop));
+                            doc[prop] = this.val(prop);
+                            return;
+                        }
+                    }
+                    videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
+                }*/
                 doc[prop] = this.val(prop);
                 videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
             }   
@@ -131,7 +174,8 @@ class VideoController {
         
         locallySendIntent("I_AM_ALIVE", { widget: 'video_canvas' });
         locallySendIntent("PEED_ID", { peerId: this.peerId });
-        networkCtrl.joinNetwork(this.peerId);
+        //networkCtrl.joinNetwork(this.peerId);
+        //this.change_video('http://golovin.de/ba/parking.mp4');
         
     }
 
@@ -141,6 +185,8 @@ class VideoController {
         this.canvas.clear();
         
     }
+
+    
 
     public on_object_added(object: fabric.IObject) { //only executed when own recently drawn object was added (hopefully)
         console.log('fabric added:', object);
@@ -161,8 +207,10 @@ class VideoController {
         var prepDoc = collab.prepareForYatta(object);
         console.log('collab json fabric', prepDoc); 
         var anno = { time: time, doc: prepDoc };
-        
-        yatta.val(id, anno, "immutable");
+        if(yatta.val(videoCtr.video.src) === undefined)
+            yatta.val(videoCtr.video.src, {}, "immutable");
+        yatta.val(videoCtr.video.src).val(id, anno, "immutable");
+        //yatta.val(id, anno, "immutable");
         console.log('collab yatta added anno');
 
         var intent = {
@@ -181,18 +229,32 @@ class VideoController {
  
     }
 
-    public on_object_changed( object: fabric.IObject, event:string) {
+    public on_object_changed(object: fabric.IObject, event: string) {
+        
+        if (object instanceof fabric.Group) {
+            
+            object.getObjects().forEach((obj) => {     
+                console.log('on_object_changed', obj);           
+                videoCtr.on_object_changed(obj, 'recursion');
+            });
+            return;
+        }
+        
+        console.log('on_object_changed not recursive', object); 
         var tempJson = object.toJSON(['collab_id']);
         var id = object.get('collab_id');
-        var tempYatta = collab.unpackFromYatta(yatta.val(id).val('doc').val());
+        //var tempYatta = collab.unpackFromYatta(yatta.val(id).val('doc').val());
+        var tempYatta = collab.unpackFromYatta(yatta.val(videoCtr.video.src).val(id).val('doc').val());
+        
         fabric.util.enlivenObjects([tempYatta], (objects) => {
             var tempJSON2 = objects[0].toJSON(['collab_id']);
             videoCtr.svg_adapter.handle_diverged_props(tempJson, tempJSON2, (prop) => {
                 //console.log('would change:', prop, tempJson[prop], tempJSON2[prop]);
-                yatta.val(id).val('doc').val(prop, tempJson[prop]);
+                //yatta.val(id).val('doc').val(prop, tempJson[prop]);
+                yatta.val(videoCtr.video.src).val(id).val('doc').val(prop, tempJson[prop]);
             });
 
-        });
+        }); //*/
         
         
 
@@ -238,15 +300,25 @@ class VideoController {
         }
 
         if (anno.doc instanceof fabric.Object) {
-           
-            if (!curr_anno){
-                this.annotations.push({ time: anno.time, doc: [jQuery.extend(true, {}, anno.doc)] });
+
+            var cloneObj;
+            var test = anno.doc.clone(function (obj) { console.log('cloned obj1', obj); cloneObj = obj; }, ['collab_id']);
+            cloneObj = test ? test : cloneObj; //sometimes test works? (bug in fabric)
+            console.log('cloned obj', cloneObj);
+            console.log('cloned test', test);
+            if (!curr_anno) {                
+                this.annotations.push({ time: anno.time, doc: [cloneObj] });
+                //this.annotations.push({ time: anno.time, doc: [jQuery.extend(true, {}, anno.doc)] });
                        
             }
             else {
-                curr_anno.doc.push(jQuery.extend(true, {}, anno.doc)); //cloning is important, since objs get destroyed if not displayed                            
-            } 
-            this.display_annotation_at(this.video.currentTime, false);
+               // curr_anno.doc.push(jQuery.extend(true, {}, anno.doc)); //cloning is important, since objs get destroyed if not displayed                            
+                curr_anno.doc.push(cloneObj); 
+
+            }
+            
+            this.display_annotation_at(this.video.currentTime, false); 
+            
         }
         else
         fabric.util.enlivenObjects([anno.doc], (objects) => {
@@ -312,11 +384,13 @@ class VideoController {
         this.canvas.isDrawingMode = !this.canvas.isDrawingMode;
     }
 
-    public annotation_at(time: number, threshold = 0.25) {
+    public annotation_at(time: number, url?:string, threshold = 0.25) {
         var res = null;
-
+        if (!url) url = this.video.src;
         var dist = 10000000; //works for videos with duration <= 2777h
-        this.annotations.forEach((anno) => {
+
+        var annotations = this.video_anno_map[url]? this.video_anno_map[url] : [];
+        annotations.forEach((anno) => {
             var currDist = Math.abs(anno.time - time);
             if (currDist < dist && threshold >= currDist) {
                 dist = currDist;
@@ -337,6 +411,8 @@ class VideoController {
         var res = this.annotation_at(time);
         this.last_displayed_anno = this.curr_anno;
         this.curr_anno = res;
+        console.log('display at time', time);
+        console.log('display at', res);
 
         /*if (this.curr_anno !== this.last_displayed_anno) {
             this.i_am_at_anno();
@@ -361,12 +437,14 @@ class VideoController {
                         this.canvas.add(a);
                     }
                     catch (e) {
-                        console.log(e);
+                        console.error(e);
                     }
                 });
             }
             else
                 this.canvas.add(res.doc);
+
+        //this.canvas.renderAll();
 
             this.canvas.on('object:added', (a) => { this.svg_adapter.on_object_added(a.target); });
       //  }
@@ -400,7 +478,7 @@ class VideoController {
             fObj.setOptions({ stroke: color });
             this.canvas.renderAll();
             console.log('fabric color change', fObj);
-            yatta.val(fObj.get('collab_id')).val('doc').val('stroke', color);
+            yatta.val(this.video.src).val(fObj.get('collab_id')).val('doc').val('stroke', color);
         }
     }
 
@@ -434,12 +512,15 @@ class VideoController {
         }, 100);
     }
 
-    public get_doc_by_id(id:string) {
-        for (var i = 0; i < this.annotations.length; i++)
-            for (var j = 0; j < this.annotations[i].doc.length; j++){
-                if (this.annotations[i].doc[j].get('collab_id') === id)
-                    return this.annotations[i].doc[j];
-            }
+    public get_doc_by_id(id: string) {
+        for (var url in this.video_anno_map) {
+            var annotations = this.video_anno_map[url];
+            for (var i = 0; i < annotations.length; i++)
+                for (var j = 0; j < annotations[i].doc.length; j++) {
+                    if (annotations[i].doc[j].get('collab_id') === id)
+                        return annotations[i].doc[j];
+                }
+        }
         return null;
     }
 
@@ -470,6 +551,22 @@ class VideoController {
         });
         this.canvas.add(rect);
         this.canvas.renderAll();
+    }
+
+    public change_video(url:string) {
+        this.video.src = url;
+
+        if (!this.video_anno_map[url]) {
+            this.video_anno_map[url] = [];
+        }
+
+        this.annotations = this.video_anno_map[url];
+        this.display_annotation_at(0, false);
+
+        this.annotations.forEach((anno) => {
+            locallySendIntent("NEW_ANNOTATION", { "time": anno.time });
+        });
+        
     }
     
 }
@@ -502,15 +599,17 @@ function router(intent) {
             break;
         case 'SET_VIDEO_TIME':
             //if (!videoCtr.video.paused) videoCtr.play_pause();
-            videoCtr.video.currentTime = parseFloat(intent.extras.time);
-            videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
+            try {
+                videoCtr.video.currentTime = parseFloat(intent.extras.time);
+                videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
+            } catch (e) { console.warn('versucht video-time zu aendern.'); }
             
             break;
         case 'TOGGLE':
             videoCtr.toggle();            
             break;
         case 'ACTION_OPEN':
-            videoCtr.video.src = intent.data;
+            videoCtr.change_video(intent.data);
             break;
 
         case 'COLL_WRITE':

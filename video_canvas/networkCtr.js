@@ -107,8 +107,7 @@ var NetworkController = (function () {
     return NetworkController;
 })();
 
-var networkCtrl = new NetworkController();
-
+//var networkCtrl = new NetworkController();
 function routerNetwork(intent) {
     switch (intent.action) {
         case 'UPDATE_MASTER_DEVICE':

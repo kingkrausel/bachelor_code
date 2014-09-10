@@ -9,7 +9,8 @@ class VideoInstructionsCtrl {
     public last_video_time = 0;
     public duration = 1;
     public jSlider: any;
-    private annotated_times: number[] = [];
+    private annotated_times = [];
+    private video_anno_map = {};
     public drawinMode = true;
     public anno_countdown;
     public anno_view_time = 5;
@@ -86,7 +87,16 @@ class VideoInstructionsCtrl {
 
     public add_annotation_time(anno) {
         this.annotated_times.push(anno);
-        this.annotated_times.sort((a, b)=>{return a - b;});
+        this.annotated_times.sort((a, b) => { return a - b; });
+        var i = 0;
+        while (i < this.annotated_times.length) {
+            if (this.annotated_times[i] === this.annotated_times[i + 1]) {
+                this.annotated_times.splice(i + 1, 1);
+            }
+            else {
+                i += 1;
+            }
+        }
         this.update_markers();
     }
 
@@ -251,6 +261,7 @@ class VideoInstructionsCtrl {
         });
 
         this.update_markers();
+        this.set_video_time(0);
     }
     
 
@@ -313,6 +324,16 @@ class VideoInstructionsCtrl {
                 console.log('hi');
             }, 3000);
         }
+    }
+
+    public change_video(url: string) {
+        if (this.video_anno_map[url] === undefined) {
+            this.video_anno_map[url] = [];            
+        }
+
+        this.annotated_times = this.video_anno_map[url];
+        this.update_markers();
+        //this.set_video_time(0);
     }
 
 }
@@ -392,6 +413,10 @@ function controller_router(intent) {
             //controller.master_status_changed(intent.extras.isMaster);
             //TODO: only master boradcasts data
             sendIntent('I_AM_AT_ANNO', { peerId: controller.peerId, time: controller.curr_displayed_anno });
+            break;
+
+        case 'ACTION_OPEN':
+            controller.change_video(intent.data);
             break;
 
         /************** Check if other widgets are there ***********************/

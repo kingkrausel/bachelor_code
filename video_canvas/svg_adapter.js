@@ -34,6 +34,10 @@ var Adapter = (function () {
             videoCtr.activeDoc = null;
         });
 
+        this.canvas.on("object:modified", function (a) {
+            console.log('object:modified');
+        });
+
         this.canvas.on("object:moving", function (a) {
             /*console.log("fabric moved", a);
             if (a.target.getObjects !== undefined) {

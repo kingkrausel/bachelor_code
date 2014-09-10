@@ -63,7 +63,8 @@
     </script >
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
-    <script src="http://golovin.de/ba/video_canvas/lib/fabric.min.js"></script>
+     <script src="http://golovin.de/ba/video_canvas/lib/fabric.min.js"></script>    
+   <!-- <script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script>--> 
     <script> 
     
     var yatta, yattaHandler;

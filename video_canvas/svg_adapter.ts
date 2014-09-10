@@ -49,6 +49,8 @@ class Adapter {
         this.canvas.on("selection:cleared", (a) => {
             videoCtr.activeDoc = null;
         });
+
+        this.canvas.on("object:modified", (a) => { console.log('object:modified'); });
         
         this.canvas.on("object:moving", (a) => {
             

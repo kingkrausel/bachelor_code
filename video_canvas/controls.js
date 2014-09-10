@@ -8,6 +8,7 @@ var VideoInstructionsCtrl = (function () {
         this.last_video_time = 0;
         this.duration = 1;
         this.annotated_times = [];
+        this.video_anno_map = {};
         this.drawinMode = true;
         this.anno_view_time = 5;
         this.anno_cd_timer = 0;
@@ -83,6 +84,14 @@ var VideoInstructionsCtrl = (function () {
         this.annotated_times.sort(function (a, b) {
             return a - b;
         });
+        var i = 0;
+        while (i < this.annotated_times.length) {
+            if (this.annotated_times[i] === this.annotated_times[i + 1]) {
+                this.annotated_times.splice(i + 1, 1);
+            } else {
+                i += 1;
+            }
+        }
         this.update_markers();
     };
 
@@ -243,6 +252,7 @@ var VideoInstructionsCtrl = (function () {
         });
 
         this.update_markers();
+        this.set_video_time(0);
     };
 
     VideoInstructionsCtrl.prototype.start_anno_countdown = function () {
@@ -306,6 +316,16 @@ var VideoInstructionsCtrl = (function () {
                 console.log('hi');
             }, 3000);
         }
+    };
+
+    VideoInstructionsCtrl.prototype.change_video = function (url) {
+        if (this.video_anno_map[url] === undefined) {
+            this.video_anno_map[url] = [];
+        }
+
+        this.annotated_times = this.video_anno_map[url];
+        this.update_markers();
+        //this.set_video_time(0);
     };
     return VideoInstructionsCtrl;
 })();
@@ -381,6 +401,10 @@ function controller_router(intent) {
             //controller.master_status_changed(intent.extras.isMaster);
             //TODO: only master boradcasts data
             sendIntent('I_AM_AT_ANNO', { peerId: controller.peerId, time: controller.curr_displayed_anno });
+            break;
+
+        case 'ACTION_OPEN':
+            controller.change_video(intent.data);
             break;
 
         case 'I_AM_ALIVE':
