@@ -131,9 +131,6 @@ function sendIntent(intent) {
 
 
 function iwcCallback(intent) {
-    console.log("********************************************");
-    console.log(intent);
-    console.log("********************************************");
     //	var output = document.getElementById("output");
     //		var oldLog = output.innerHTML;
     //		output.innerHTML = oldLog + JSON.stringify(intent) + "<br/>";

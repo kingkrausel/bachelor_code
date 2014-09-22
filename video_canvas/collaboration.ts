@@ -88,6 +88,8 @@ class Collaboration {
     public prepareForYatta(elem: fabric.IObject) {
         
         var json = elem.toJSON(['collab_id']);
+        return json;
+
         //delete res.path;
         for (var key in elem) {
 
@@ -101,7 +103,7 @@ class Collaboration {
     }
 
     public unpackFromYatta(json: any) {
-
+        return json;
         
         //delete res.path;
         for (var key in json) {

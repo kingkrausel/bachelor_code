@@ -31,11 +31,15 @@ var Adapter = (function () {
         });
 
         this.canvas.on("selection:cleared", function (a) {
-            videoCtr.activeDoc = null;
+            try  {
+                videoCtr.activeDoc = null;
+            } catch (e) {
+            }
         });
 
-        this.canvas.on("object:modified", function (a) {
-            console.log('object:modified');
+        this.canvas.on("text:changed", function (a) {
+            _this.on_object_moved(a.target, "object:moving");
+            console.log('text:changed', a);
         });
 
         this.canvas.on("object:moving", function (a) {
@@ -173,8 +177,12 @@ var Adapter = (function () {
                         callback(prop);
                 }
                 if (typeof a[prop] === 'object' || typeof a[prop] === 'array') {
-                    if (JSON.stringify(a[prop]) !== JSON.stringify(b[prop]))
-                        callback(prop);
+                    try  {
+                        if (JSON.stringify(a[prop]) !== JSON.stringify(b[prop]))
+                            callback(prop);
+                    } catch (e) {
+                        console.warn('versions may be diverged: Unterschiede konnten nicht korrekt überprüft werden(handle_diverged_props).');
+                    }
                 }
             }
         }

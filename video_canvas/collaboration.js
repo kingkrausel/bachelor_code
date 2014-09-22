@@ -55,6 +55,7 @@ var Collaboration = (function () {
     }
     Collaboration.prototype.prepareForYatta = function (elem) {
         var json = elem.toJSON(['collab_id']);
+        return json;
 
         for (var key in elem) {
             if (json[key] === null) {
@@ -67,6 +68,8 @@ var Collaboration = (function () {
     };
 
     Collaboration.prototype.unpackFromYatta = function (json) {
+        return json;
+
         for (var key in json) {
             if (json[key] === 'null') {
                 json[key] = null;

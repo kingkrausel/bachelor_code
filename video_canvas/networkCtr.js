@@ -1,15 +1,18 @@
 var NetworkController = (function () {
+    // public intialTimerID = 0;
     function NetworkController() {
         this.isMaster = false;
         this.masterAbilityScore = 0;
         this.masterAlive = false;
         this.masterPingTime = 5 * 1000;
         this.waitForMasterPing = this.masterPingTime * 2;
+        this.initialWaiting = 20 * 1000;
         this.timerID = 0;
         this.masterPingTimerID = 0;
         this.shouldBecomeMaster = true;
         this.masterAbilityScore = this.calcMasterDeviceAbility();
         this.timerID = setInterval(NetworkController.askToBecomeMaster, this.waitForMasterPing); //assume after waitForMasterPing that master is dead.
+        //this.intialTimerID = this.timerID;
     }
     NetworkController.prototype.calcMasterDeviceAbility = function () {
         /**
@@ -28,10 +31,12 @@ var NetworkController = (function () {
         this.masterAlive = true;
         clearInterval(this.timerID); //master is alive, don't ask to become master...maybe next time ;)
         this.timerID = setInterval(NetworkController.askToBecomeMaster, this.waitForMasterPing); //maybe master dies this time (in next time intervall)
+        console.log('New  intervall number: ', this.timerID);
     };
 
     NetworkController.askToBecomeMaster = function () {
         networkCtrl.masterAlive = false;
+        networkCtrl.isMaster = false;
 
         var data = {
             score: networkCtrl.masterAbilityScore,
@@ -63,6 +68,8 @@ var NetworkController = (function () {
         if (wasMaster !== networkCtrl.isMaster) {
             networkCtrl.locallySendIntent('MASTER_STATUS', { isMaster: networkCtrl.isMaster });
         }
+
+        networkCtrl.shouldBecomeMaster = true; //so we have a chance next time
     };
 
     NetworkController.prototype.calcUniqueId = function () {
@@ -106,10 +113,16 @@ var NetworkController = (function () {
     NetworkController.prototype.joinNetwork = function (id) {
         this.sendIntent('JOIN_NETWORK', [], { id: id });
     };
+
+    NetworkController.prototype.stopBeeingMaster = function () {
+        this.isMaster = false;
+        clearInterval(this.masterPingTimerID);
+    };
     return NetworkController;
 })();
 
-//var networkCtrl = new NetworkController();
+var networkCtrl = new NetworkController();
+
 function routerNetwork(intent) {
     switch (intent.action) {
         case 'UPDATE_MASTER_DEVICE':
@@ -132,6 +145,11 @@ function routerNetwork(intent) {
             }
             break;
         case 'MASTER_IS_ALIVE':
+            if (intent.sender.length > 0 && networkCtrl.isMaster) {
+                console.warn('multiple masters in network, stop beeing master.'); //happens when XMPP-server takes way to long to responde
+                networkCtrl.stopBeeingMaster();
+                break;
+            }
             networkCtrl.masterIsAlive();
             break;
     }

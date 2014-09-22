@@ -6,14 +6,17 @@ class NetworkController {
     public masterPingTime = 5 * 1000; //Master pings every 10 secs to validate that he is alive
 
     public waitForMasterPing = this.masterPingTime * 2;
+    public initialWaiting = 20 * 1000; //be at least 20 seconds in network to become master
     private timerID = 0;
     public masterPingTimerID = 0;
     public randomOnScoreCollision: number;
     public shouldBecomeMaster = true;
+   // public intialTimerID = 0;
 
     constructor() {
         this.masterAbilityScore = this.calcMasterDeviceAbility();
         this.timerID = setInterval(NetworkController.askToBecomeMaster, this.waitForMasterPing); //assume after waitForMasterPing that master is dead.
+        //this.intialTimerID = this.timerID;
     }
 
     private calcMasterDeviceAbility():number {
@@ -33,10 +36,14 @@ class NetworkController {
         this.masterAlive = true;
         clearInterval(this.timerID); //master is alive, don't ask to become master...maybe next time ;)
         this.timerID = setInterval(NetworkController.askToBecomeMaster, this.waitForMasterPing); //maybe master dies this time (in next time intervall)
+        console.log('New  intervall number: ', this.timerID);
     }
+
+    
 
     public static askToBecomeMaster() { //finally, master is dead!
         networkCtrl.masterAlive = false;
+        networkCtrl.isMaster = false;
 
         var data = {
             score: networkCtrl.masterAbilityScore,
@@ -67,6 +74,8 @@ class NetworkController {
         if (wasMaster !== networkCtrl.isMaster) { //Master-status changed, inform all local widgets
             networkCtrl.locallySendIntent('MASTER_STATUS', { isMaster: networkCtrl.isMaster });
         }
+
+        networkCtrl.shouldBecomeMaster = true; //so we have a chance next time
 
     }
 
@@ -110,9 +119,14 @@ class NetworkController {
     public joinNetwork(id) {
         this.sendIntent('JOIN_NETWORK', [], {id:id});
     }
+
+    public stopBeeingMaster() {
+        this.isMaster = false;
+        clearInterval(this.masterPingTimerID);
+    }
 } 
 
-//var networkCtrl = new NetworkController();
+var networkCtrl = new NetworkController();
 
 
 function routerNetwork(intent) { //called in app.js
@@ -141,7 +155,12 @@ function routerNetwork(intent) { //called in app.js
 
             }
                 break;
-        case 'MASTER_IS_ALIVE': //received message from master -> master is alive            
+        case 'MASTER_IS_ALIVE': //received message from master -> master is alive  
+            if (intent.sender.length > 0 && networkCtrl.isMaster) {//remote master but I am master, too.
+                console.warn('multiple masters in network, stop beeing master.'); //happens when XMPP-server takes way to long to responde
+                networkCtrl.stopBeeingMaster();
+                break;
+            }  
             networkCtrl.masterIsAlive();
                 break;        
     }

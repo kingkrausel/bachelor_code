@@ -47,10 +47,15 @@ class Adapter {
         });
 
         this.canvas.on("selection:cleared", (a) => {
-            videoCtr.activeDoc = null;
+            try {
+                videoCtr.activeDoc = null;
+            } catch (e) { }
         });
 
-        this.canvas.on("object:modified", (a) => { console.log('object:modified'); });
+        this.canvas.on("text:changed", (a) => {
+            this.on_object_moved(a.target, "object:moving");
+            console.log('text:changed', a);
+        });
         
         this.canvas.on("object:moving", (a) => {
             
@@ -186,8 +191,11 @@ class Adapter {
                 }
                 if (typeof a[prop] === 'object'
                     || typeof a[prop] === 'array') {
-                        
+                        try {
                             if (JSON.stringify(a[prop]) !== JSON.stringify(b[prop])) callback(prop);
+                        } catch (e) {
+                            console.warn('versions may be diverged: Unterschiede konnten nicht korrekt überprüft werden(handle_diverged_props).');
+                        }
                         
                 }
             }
@@ -195,5 +203,13 @@ class Adapter {
     }
 }
 
+/*
+
+cd(frames['__gadget_1'])
+
+var itext = new fabric.IText('Test');
+videoCtr.canvas.add(itext);
+
+*/
 
  

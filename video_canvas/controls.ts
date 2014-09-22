@@ -100,6 +100,14 @@ class VideoInstructionsCtrl {
         this.update_markers();
     }
 
+    public delete_annotation_time(anno) {
+        var index = this.annotated_times.indexOf(anno);
+        if (index > -1) {
+            this.annotated_times.splice(index,1);
+        }
+        this.update_markers();
+    }
+
     public toggle() {
         this.drawinMode = !this.drawinMode;
         var intent = {
@@ -153,6 +161,20 @@ class VideoInstructionsCtrl {
     public rect() {
         if (this.drawinMode) this.toggle()
         locallySendIntent('MAKE_RECT', {});
+        if (this.playing)
+            this.pause();
+    }
+
+    public itext() {
+        if (this.drawinMode) this.toggle()
+        locallySendIntent('MAKE_ITEXT', {});
+        if (this.playing)
+            this.pause();
+    }
+
+    public arrow() {
+        if (this.drawinMode) this.toggle()
+        locallySendIntent('MAKE_ARROW', {});
         if (this.playing)
             this.pause();
     }
@@ -393,6 +415,9 @@ function controller_router(intent) {
             break;
         case 'NEW_ANNOTATION':
             controller.add_annotation_time( parseFloat(intent.extras.time));
+            break;
+        case 'DELETE_ANNO':
+            controller.delete_annotation_time(parseFloat(intent.extras.time));
             break;
         case 'OWN_NEW_ANNO':
             controller.get_updated_time(intent.extras.time);

@@ -38,7 +38,7 @@
  -->
  
   <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
-  <script src="http://golovin.de/ba/yatta/build/browser/Frameworks/JsonYatta.min.js"></script>
+  <script src="http://golovin.de/ba/yatta/build/browser/Frameworks/JsonFramework.min.js"></script>
   <script src="http://golovin.de/ba/yatta/build/browser/Connectors/PeerJsConnector.min.js"></script>
   
 	
@@ -50,15 +50,13 @@
     
     <script type ="application/javascript">
      /* */var iwcClient ;
+     var HACK_LOADED_COUNTER = 0;
       function init () {
+      HACK_LOADED_COUNTER++;
       iwcClient = new iwc.Client () ;
-      var iwcCallback = function ( intent ) {
-      console.log (" Received Intent :") ;
-      console.log ( intent ) ;
-      };
-      //iwcClient.connect ( iwcCallback ) ;
-      
-      
+      console.log("initialized IWC"); 
+      if(HACK_LOADED_COUNTER >= 2)
+        $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm");
       }
       gadgets.util.registerOnLoadHandler ( init ) ;
     </script >
@@ -78,10 +76,12 @@
       var user_id = Math.ceil(Math.random() * 10000000);
      Y.createPeerJsConnector({key: '2am04n5pn26v42t9'}, function(Connector, user_id){
     // Y.createIwcConnector(function(Connector, user_id){
-        yatta = new Y.JsonYatta(user_id, Connector);
-        console.log("initializing..");        
+      HACK_LOADED_COUNTER++;
+        yatta = new Y.JsonFramework(user_id, Connector);
+        console.log("initialized Yatta");        
         yatta.setMutableDefault('immutable');
-        $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm");
+        if(HACK_LOADED_COUNTER >= 2)
+          $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm");
 
       });
     
