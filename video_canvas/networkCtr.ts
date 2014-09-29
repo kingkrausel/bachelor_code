@@ -71,9 +71,9 @@ class NetworkController {
 
 
         }
-        if (wasMaster !== networkCtrl.isMaster) { //Master-status changed, inform all local widgets
-            networkCtrl.locallySendIntent('MASTER_STATUS', { isMaster: networkCtrl.isMaster });
-        }
+        //if (wasMaster !== networkCtrl.isMaster) { //Master-status changed, inform all local widgets
+        networkCtrl.locallySendIntent('MASTER_STATUS', { isMaster: networkCtrl.isMaster });
+        //}
 
         networkCtrl.shouldBecomeMaster = true; //so we have a chance next time
 

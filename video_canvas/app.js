@@ -3,6 +3,12 @@
 /// <reference path="definitions/jquery.d.ts" />
 /// <reference path="definitions/fabricjs.d.ts" />
 //var XML_TEST = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">    < svg xmlns = "http://www.w3.org/2000/svg" xmlns: xlink = "http://www.w3.org/1999/xlink" version = "1.1" width = "640" height = "480" xml: space = "preserve" > <desc>Created with Fabric.js 1.4.0 < /desc><defs></defs ><g transform = "translate(196 106)" ><path d = "M 54.5 9 Q 54.5 9 55 9 Q 55.5 9 55.25 9 Q 55 9 53.5 8 Q 52 7 50.5 6 Q 49 5 47 4.5 Q 45 4 43 3.5 Q 41 3 38.5 3 Q 36 3 34.5 2.5 Q 33 2 32 1.5 Q 31 1 30.5 0.5 Q 30 0 28 0 Q 26 0 25 0 Q 24 0 21.5 0.5 Q 19 1 18 1.5 Q 17 2 15.5 3 Q 14 4 13 4.5 Q 12 5 10 7.5 Q 8 10 7.5 11 Q 7 12 5 15.5 Q 3 19 2.5 20.5 Q 2 22 2 23.5 Q 2 25 1 29.5 Q 0 34 0 35.5 Q 0 37 0 40.5 Q 0 44 0 45.5 Q 0 47 0 50 Q 0 53 0 54.5 Q 0 56 0 56.5 Q 0 57 0.5 59 Q 1 61 1 62.5 Q 1 64 1.5 66 Q 2 68 3 69 Q 4 70 5 72 Q 6 74 7 74.5 Q 8 75 9.5 76.5 Q 11 78 11.5 78.5 Q 12 79 13 79.5 Q 14 80 16 81 Q 18 82 18.5 82 Q 19 82 20 82 Q 21 82 22 82 Q 23 82 25 82 Q 27 82 28 82 Q 29 82 30.5 82 Q 32 82 32.5 82 Q 33 82 34.5 81 Q 36 80 37 79.5 Q 38 79 38.5 78.5 Q 39 78 41 77 Q 43 76 43.5 75.5 Q 44 75 45 74 Q 46 73 47 72.5 Q 48 72 49.5 71 Q 51 70 51.5 69 Q 52 68 52.5 68 Q 53 68 54 67 Q 55 66 55.5 65 Q 56 64 56 63.5 Q 56 63 57.5 61 Q 59 59 59.5 58 Q 60 57 61 54.5 Q 62 52 62.5 51 Q 63 50 63 49 Q 63 48 64 47 Q 65 46 65 45 Q 65 44 65 43.5 Q 65 43 65.5 39 Q 66 35 66 33.5 Q 66 32 66 29 Q 66 26 66 25.5 Q 66 25 66 24 Q 66 23 65.5 23 Q 65 23 64.5 22.5 Q 64 22 64 21.5 Q 64 21 63.5 21 Q 63 21 62.5 21 Q 62 21 61.5 20.5 Q 61 20 60.5 19.5 Q 60 19 59.5 18.5 Q 59 18 58 17.5 Q 57 17 56.5 16.5 Q 56 16 55 15 Q 54 14 53.5 13 Q 53 12 52.5 11.5 Q 52 11 52 10 Q 52 9 51.5 9 Q 51 9 50.5 8.5 Q 50 8 49.5 7 Q 49 6 48.5 4.5 Q 48 3 47.5 3 Q 47 3 46.5 3 L 46 3" style = "stroke: rgb(0, 0, 0); stroke-width: 1; stroke-dasharray: ; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10; fill: none; opacity: 1;" transform = "translate(-33 -41)" stroke - linecap ="round" / ></g></svg >';
+/**********************************
+Google accounts:
+rolegolovin
+rolesdktest
+justgive...
+*/
 var hashCode = function () {
     var hash = 0, i, chr, len;
     if (this.length == 0)
@@ -20,7 +26,8 @@ var XML_TEST = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>    < svg 
 var SVG_TEST;
 var SVG_ARROW = '<?xml version="1.0" encoding="utf-8"?> <!-- Generator: Adobe Illustrator 16.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0) --> <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"> <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="104.08px" height="94.747px" viewBox="0 0 104.08 94.747" enable-background="new 0 0 104.08 94.747" xml:space="preserve"> <path d="M104.08,47.374L56.707,94.747l-1.414-1.414l45.959-45.959L55.293,1.414L56.707,0L104.08,47.374z M100.112,46.374H0v2 h100.112V46.374z"/> </svg> ';
 var HACK_JOIN_NTWRK = 0;
-var HACK_JOIN_COUNTER = 3;
+var HACK_JOIN_COUNTER = 30;
+var DEVELOPMENT = true;
 var VideoController = (function () {
     /////public isPlaying: boolean = false;
     function VideoController(id) {
@@ -39,6 +46,9 @@ var VideoController = (function () {
         this.curr_anno = null;
         this.isMaster = false;
         this.server_updater_timer = 0;
+        this.max_path_length = 400;
+        this.yatta_garbage_time = 0;
+        this.yatta_garbage_timeout = 10 * 1000;
         this.video = document.getElementById(id);
         this.start_video_observer();
         fabric.loadSVGFromString(SVG_ARROW, function (objs, options) {
@@ -116,14 +126,14 @@ var VideoController = (function () {
 
         yatta.on('addProperty', function (e, prop) {
             //
-            console.log('collab addProperty triggered', prop);
-            if (prop.indexOf(_this.peerId) === -1 && prop.indexOf('//:') === -1) {
+            //console.log('measurment received new object:', new Date().getTime());
+            //console.log('collab addProperty triggered', prop);
+            if (prop.indexOf(_this.peerId) === -1 && prop.indexOf('://') === -1) {
                 for (var url in yatta.val()) {
-                    if (yatta.val(url).val(prop) !== undefined) {
+                    if (yatta.val(url).val(prop) !== undefined && yatta.val(url).val(prop) !== 'deleted') {
                         var anno = yatta.val(url).val(prop).val();
                         anno.doc = collab.unpackFromYatta(anno.doc);
-
-                        //console.log('collab received anno and unpacked', anno);
+                        console.log('collab received anno and unpacked', anno);
                         if (_this.video.src === url) {
                             _this.update_anno(anno);
                             _this.display_annotation_at(_this.video.currentTime, false);
@@ -156,7 +166,7 @@ var VideoController = (function () {
         });
 
         yatta.on('change', function (e, prop, op) {
-            if (prop.indexOf('//:') !== -1)
+            if (prop.indexOf('://') !== -1)
                 return;
 
             //console.log('collab Property change was triggered', this);
@@ -170,11 +180,15 @@ var VideoController = (function () {
                 videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
                 return;
             }
+
+            //console.log('measurment received new change:', new Date().getTime());
+            console.log('collab changed recieved on prop', prop, this.val());
             var id = this.val('collab_id');
+
             if (id) {
                 var doc = videoCtr.get_doc_by_id(id);
+                console.log('collab doc', doc);
 
-                //console.log('collab doc', this);
                 /* if (doc[prop] !== this.val(prop)) { //remote change or nearly euqivalent numbers
                 
                 if (typeof this.val(prop) === 'number') {
@@ -196,16 +210,21 @@ var VideoController = (function () {
         this.svg_adapter.on_object_scaled = this.on_object_changed;
 
         locallySendIntent("I_AM_ALIVE", { widget: 'video_canvas' });
-        locallySendIntent("PEED_ID", { peerId: this.peerId });
+        locallySendIntent("PEER_ID", { peerId: this.peerId });
         networkCtrl.joinNetwork(this.peerId);
         this.change_video('http://golovin.de/ba/parking.mp4');
 
         jQuery("body").keyup(function (event) {
             if (event.keyCode == 46) {
+                var selected = _this.canvas.getActiveObject();
+                if (selected instanceof fabric.IText && selected.isEditing)
+                    return;
+
                 _this.delete_selected();
             }
             //console.log('keypress!', event.keyCode);
         });
+        //this.yatta_garbage_time = setInterval(() => { console.log('clearing garbage!'); yatta.HB.emptyGarbage(); }, this.yatta_garbage_timeout);
     }
     VideoController.prototype.set_video_time = function (time) {
         // if (!this.video.paused) this.play_pause();
@@ -214,9 +233,16 @@ var VideoController = (function () {
     };
 
     VideoController.prototype.on_object_added = function (object) {
+        if (object instanceof fabric.Path) {
+            if (object.path.length > videoCtr.max_path_length) {
+                videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
+                console.warn('Too long path inserted, ignore it.');
+                return;
+            }
+        }
         var videoURL = videoCtr.video.src;
 
-        console.log('fabric added:', object);
+        console.log('measurment add object:', new Date().getTime());
         var id = videoCtr.peerId + '_' + videoCtr.fabricCounter++;
         object.set('collab_id', id);
 
@@ -227,6 +253,8 @@ var VideoController = (function () {
         var layer = 0;
 
         //if (object instanceof Array) console.error('warum ist das ein array??');
+        //clearInterval(videoCtr.yatta_garbage_time);
+        //videoCtr.yatta_garbage_time = setInterval(() => { console.log('clearing garbage!'); yatta.HB.emptyGarbage(); }, videoCtr.yatta_garbage_timeout);
         var prepDoc = collab.prepareForYatta(object);
 
         //console.log('collab json fabric', prepDoc);
@@ -265,11 +293,14 @@ var VideoController = (function () {
         var id = object.get('collab_id');
 
         //var tempYatta = collab.unpackFromYatta(yatta.val(id).val('doc').val());
+        //clearInterval(videoCtr.yatta_garbage_time);
+        //videoCtr.yatta_garbage_time = setInterval(() => { console.log('clearing garbage!'); yatta.HB.emptyGarbage(); }, videoCtr.yatta_garbage_timeout);
         var tempYatta = yatta.val(videoCtr.video.src).val(id).val('doc').val();
 
         videoCtr.svg_adapter.handle_diverged_props(tempJson, tempYatta, function (prop) {
             //console.log('would change:', prop, tempJson[prop], tempJSON2[prop]);
             //yatta.val(id).val('doc').val(prop, tempJson[prop]);
+            //console.log('measurment new change:', new Date().getTime());
             yatta.val(videoCtr.video.src).val(id).val('doc').val(prop, tempJson[prop]);
         });
         /*var tempYatta = collab.unpackFromYatta(yatta.val(videoCtr.video.src).val(id).val('doc').val());
@@ -326,11 +357,13 @@ var VideoController = (function () {
             }
 
             this.display_annotation_at(this.video.currentTime, false);
-        } else
+        } else {
+            if (anno.doc.type === 'i-text')
+                anno.doc.text = 'text'; //hack, because yatta sets it to undefined
             fabric.util.enlivenObjects([anno.doc], function (objects) {
                 anno.doc = objects[0];
+                console.log('collab fabric enlivenObjects', anno.doc);
 
-                //console.log('fabric enlivenObjects', anno.doc);
                 //this.canvas.add(objects[0]);
                 var curr_anno = _this.annotation_at(anno.time);
                 if (!curr_anno)
@@ -341,6 +374,7 @@ var VideoController = (function () {
                     curr_anno.doc.push(anno.doc);
                 }
             });
+        }
 
         this.annotations.sort(function (a, b) {
             return a.time - b.time;
@@ -434,6 +468,10 @@ var VideoController = (function () {
             return null;
         }
         var cacheActive = this.activeDoc;
+        var isEditing = false;
+        if (cacheActive instanceof fabric.IText) {
+            isEditing = cacheActive.isEditing;
+        }
 
         // if (res != this.last_displayed_anno) {
         this.canvas.clear();
@@ -465,8 +503,14 @@ var VideoController = (function () {
             }, 3000);
         }
 
-        if (cacheActive)
+        if (cacheActive) {
             this.canvas.setActiveObject(cacheActive);
+            if (cacheActive instanceof fabric.IText) {
+                cacheActive.isEditing = isEditing;
+                console.log('set editing', isEditing);
+                this.canvas.getActiveObject().isEditing = isEditing;
+            }
+        }
         return res;
     };
 
@@ -650,7 +694,7 @@ var VideoController = (function () {
     };
 
     VideoController.prototype.on_xmpp_connection = function () {
-        HACK_JOIN_COUNTER = 1; //next REGISTER_MY_PEERID will succeed (hopefully)
+        HACK_JOIN_COUNTER = 2; //next REGISTER_MY_PEERID will succeed (hopefully)
     };
 
     VideoController.prototype.delete_selected = function () {
@@ -705,6 +749,10 @@ function sleep(milliseconds) {
         ;
 }
 
+if (!DEVELOPMENT) {
+    console.log = function () {
+    };
+}
 var videoCtr;
 
 videoCtr = new VideoController();

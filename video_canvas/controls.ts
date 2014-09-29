@@ -135,7 +135,7 @@ class VideoInstructionsCtrl {
     public goto_next_anno(from = this.video_time):void {
         
         for (var i = 0; i < this.annotated_times.length; i++) {
-            if (this.annotated_times[i] > from) {
+            if (this.annotated_times[i] > from +0.1) {
                 this.set_video_time(this.annotated_times[i]);
                 break;
             }
@@ -191,7 +191,7 @@ class VideoInstructionsCtrl {
             $('#marker_' + index).click(function () {
                 var index = parseInt( $(this).attr('data-marker-index') );
                 //console.log('collba id is:', id);
-                controller.goto_annotation(index);
+                setTimeout(() => { controller.goto_annotation(index) },0);
             });
         });
 
@@ -220,14 +220,14 @@ class VideoInstructionsCtrl {
         this.video_time = time;
         this.jSlider.slider({ value: time });
         var anno_at = this.get_time_between(this.last_video_time, time);
-        console.log('anno_at',anno_at);
+        //console.log('anno_at',anno_at);
         if (this.playing && anno_at >= 0) {
+            //console.log('controls, passed anno!',anno_at);
             this.pause();            
             this.set_video_time(anno_at);
             this.start_anno_countdown();
             this.last_video_time = anno_at;
         }
-
         this.display_anno_status(time);
     }
 
@@ -433,6 +433,7 @@ function controller_router(intent) {
 
         case 'MASTER_STATUS':
             controller.master_status_changed(intent.extras.isMaster);
+            //jQuery('#debug').append('<p>Master: ' + intent.extras.isMaster+ '</p>');
             break;
         case 'JOIN_NETWORK':
             //controller.master_status_changed(intent.extras.isMaster);
@@ -453,6 +454,7 @@ function controller_router(intent) {
             break;
         case 'PEER_ID':
             controller.peerId = intent.extras.peerId;
+            //jQuery('#debug').append('<p>PeerId: ' + controller.peerId+'</p>');
             break;
     }
 

@@ -78,8 +78,10 @@
     // Y.createIwcConnector(function(Connector, user_id){
       HACK_LOADED_COUNTER++;
         yatta = new Y.JsonFramework(user_id, Connector);
-        console.log("initialized Yatta");        
+        console.log("initialized Yatta",user_id);        
         yatta.setMutableDefault('immutable');
+        //yatta.HB.setGarbageCollectTimeout(30000);
+        //yatta.HB.setManualGarbageCollect();
         if(HACK_LOADED_COUNTER >= 2)
           $("#includedContent").load("http://golovin.de/ba/video_canvas/video.htm");
 

@@ -65,10 +65,11 @@ var NetworkController = (function () {
                 networkCtrl.sendIntent('MASTER_IS_ALIVE');
             }, networkCtrl.masterPingTime); // and keep being it!
         }
-        if (wasMaster !== networkCtrl.isMaster) {
-            networkCtrl.locallySendIntent('MASTER_STATUS', { isMaster: networkCtrl.isMaster });
-        }
 
+        //if (wasMaster !== networkCtrl.isMaster) { //Master-status changed, inform all local widgets
+        networkCtrl.locallySendIntent('MASTER_STATUS', { isMaster: networkCtrl.isMaster });
+
+        //}
         networkCtrl.shouldBecomeMaster = true; //so we have a chance next time
     };
 
