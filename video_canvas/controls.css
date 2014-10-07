@@ -16,6 +16,10 @@
     top:0;
 }
 
+#resolution-slider {
+margin-top: 10px;
+}
+
 #fabric-controls {
     list-style: none;
 }
@@ -39,3 +43,15 @@
   #green .ui-slider-handle { border-color: #8ae234; }
   #blue .ui-slider-range { background: #729fcf; }
   #blue .ui-slider-handle { border-color: #729fcf; }
+
+.circle {
+border-radius: 50%;
+display: inline-block;
+margin-right: 20px;
+}
+
+#on-off-button {
+width: 10px;
+height: 10px;
+background: red;
+}

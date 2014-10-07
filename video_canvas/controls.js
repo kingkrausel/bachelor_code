@@ -21,6 +21,9 @@ var VideoInstructionsCtrl = (function () {
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
         this.jSlider.slider();
+
+        //this.jSlider.slider("pips");
+        this.jSlider.slider("float");
         this.anno_countdown = this.anno_view_time;
         this.I_am_alive();
     }
@@ -277,7 +280,7 @@ var VideoInstructionsCtrl = (function () {
                 _this.video_time = ui.value;
             }
         });
-
+        this.jSlider.slider("float");
         this.update_markers();
         this.set_video_time(0);
     };
@@ -436,6 +439,15 @@ function controller_router(intent) {
 
         case 'ACTION_OPEN':
             controller.change_video(intent.data);
+            break;
+
+        case 'CONNECTION_STATUS':
+            if (intent.extras.status === 'connected')
+                jQuery('#on-off-button').css('background', 'green');
+            if (intent.extras.status === 'close')
+                jQuery('#on-off-button').css('background', 'red');
+            if (intent.extras.status === 'disconnected')
+                jQuery('#on-off-button').css('background', 'yellow');
             break;
 
         case 'I_AM_ALIVE':

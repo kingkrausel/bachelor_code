@@ -30,7 +30,6 @@
     <Content Include="config.js" />
     <Content Include="controls.css" />
     <TypeScriptCompile Include="svg_adapter.ts" />
-
     <TypeScriptCompile Include="networkCtr.ts" />
     <Content Include="css\sevianno-style.css" />
     <Content Include="images\ajax_loader.gif" />
@@ -196,6 +195,8 @@
     <Content Include="images\sevianno_small.png" />
     <Content Include="images\update.gif" />
     <Content Include="images\wdp_buttons_upload_114x29.png" />
+    <Content Include="jquery-ui-pips\jquery-ui-slider-pips.css" />
+    <Content Include="jquery-ui-pips\jquery-ui-slider-pips.min.js" />
     <Content Include="lib\fabric.min.js" />
     <Content Include="login.xml" />
     <Content Include="networkCtr.ts" />

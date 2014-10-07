@@ -26,18 +26,26 @@
     
      <script src="http://open-app.googlecode.com/files/openapp.js"></script>
   <script src ="http://dbis.rwth-aachen.de/gadgets/iwc/lib/iwc.js"> </script >
+  
+	<script src="http://dbis.rwth-aachen.de/gadgets/lib/las/storage.js"></script> 
+	<script src="http://dbis.rwth-aachen.de/gadgets/lib/las/lasAjaxClient.js"></script> 
+  <script src="http://golovin.de/ba/video_canvas/yatta/dest/browser/Widgets/libs/DUIClient.js"></script> 
+	
+<!-- <script type="application/javascript" src="allmovies_js/allmovies.js"></script>	-->
     
     <script type="text/javascript" src="http://golovin.de/ba/video_canvas/config.js"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/dojo.js"></script>
  
   
   <!-- <script src="http://golovin.de/ba/video_canvas/yatta/dest/browser/Widgets/libs/DUIClient.js"></script> 
-    <script src="http://dbis.rwth-aachen.de/~jahns/role-widgets/widgetbundles/libraries/DUIClient.js"></script>
-
+   
     <script src="http://golovin.de/ba/yatta/build/browser/Connectors/IwcConnector.js"></script> 
+
+ 
+  <script src="http://dbis.rwth-aachen.de/~jahns/role-widgets/widgetbundles/libraries/DUIClient.js"></script>
  -->
  
-  <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+  <script src="http://cdn.peerjs.com/0.3.9/peer.js"></script>
   <script src="http://golovin.de/ba/yatta/build/browser/Frameworks/JsonFramework.min.js"></script>
   <script src="http://golovin.de/ba/yatta/build/browser/Connectors/PeerJsConnector.min.js"></script>
   
@@ -61,9 +69,9 @@
       gadgets.util.registerOnLoadHandler ( init ) ;
     </script >
 
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
-     <script src="http://golovin.de/ba/video_canvas/lib/fabric.min.js"></script>    
-   <!-- <script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script>--> 
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
+ <script src="http://golovin.de/ba/video_canvas/lib/fabric.min.js"></script>   
+   <!-- <script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script> --> 
     <script> 
     
     var yatta, yattaHandler;
@@ -71,10 +79,15 @@
     $(function(){
 
 	   /**/
-       
+       var conn = {
+        host: "golovin.de",
+        port: "63654", // this works because heroku can forward to the right port.
+        // debug: true,
+      };
      
       var user_id = Math.ceil(Math.random() * 10000000);
-     Y.createPeerJsConnector({key: '2am04n5pn26v42t9'}, function(Connector, user_id){
+    Y.createPeerJsConnector( {key: '2am04n5pn26v42t9'}, function(Connector, user_id){
+    //   Y.createPeerJsConnector( conn , function(Connector, user_id){
     // Y.createIwcConnector(function(Connector, user_id){
       HACK_LOADED_COUNTER++;
         yatta = new Y.JsonFramework(user_id, Connector);

@@ -13,25 +13,23 @@ justgive...
 
 
 */
+var lasFeedbackHandler = function (statusCode, message) {
 
-var hashCode = function () {
-    var hash = 0, i, chr, len;
-    if (this.length == 0) return hash;
-    for (i = 0, len = this.length; i < len; i++) {
-        chr = this.charCodeAt(i);
-        hash = ((hash << 5) - hash) + chr;
-        hash |= 0; // Convert to 32bit integer
-    }
-    return hash;
+    console.log("VD: Feedback: " + statusCode + ", " + message);
+
 };
 
+var lasClient = new LasAjaxClient("video drawer", lasFeedbackHandler);
+
+
 var XML_TEST = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>    < svg id = "svg2816" xmlns: rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns = "http://www.w3.org/2000/svg" viewBox = "0 0 48 48" version = "1.1" xmlns: cc = "http://creativecommons.org/ns#" xmlns: dc = "http://purl.org/dc/elements/1.1/" > <defs id = "defs2818" >< / defs > <metadata id = "metadata2821" >  <rdf:RDF>   <cc:Work rdf: about = "" >    <dc:format > image / svg + xml </dc:format >    <dc:type rdf: resource ="http://purl.org/dc/dcmitype/StillImage"/ >    <dc:title/ >   </cc:Work >  </rdf:RDF > < / metadata > <g id = "layer1" stroke - linejoin = "miter" stroke = "#ce3762" stroke - linecap = "butt" >  <path id = "path2828" style = "stroke-dasharray:none;" d = "M40,3,35,3,20,18,10,18s-5,5,0,10h10l15,15h5v-40z" transform = "translate(-5,0)" stroke - miterlimit = "4" stroke - width = "0.5" fill ="#42101e"/ >  <path id = "path2830" d = "m37,13s2,7.5359,0,15" transform = "translate(0,2)" stroke - width = "1px" fill ="none"/ >  <path id = "path2834" d = "m40,11s3,10,0,19" transform = "translate(0,2)" stroke - width = "1px" fill ="none"/ >  <path id = "path2836" d = "m43,6s6,14,0,29" transform = "translate(0,2)" stroke - width = "1px" fill ="none"/ > < / g >< / svg >';
-declare var iwc: any, iwcClient: any, collab: Collaboration, yatta: any;
+declare var iwc: any, iwcClient: any, collab: Collaboration, yatta: any, LasAjaxClient, DUIClient;
 var SVG_TEST;
 var SVG_ARROW = '<?xml version="1.0" encoding="utf-8"?> <!-- Generator: Adobe Illustrator 16.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0) --> <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"> <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="104.08px" height="94.747px" viewBox="0 0 104.08 94.747" enable-background="new 0 0 104.08 94.747" xml:space="preserve"> <path d="M104.08,47.374L56.707,94.747l-1.414-1.414l45.959-45.959L55.293,1.414L56.707,0L104.08,47.374z M100.112,46.374H0v2 h100.112V46.374z"/> </svg> ';
 var HACK_JOIN_NTWRK = 0;
 var HACK_JOIN_COUNTER = 30;
 var DEVELOPMENT = true;
+
 class VideoController {
     public video: HTMLVideoElement;
     public last_video_time = 0;
@@ -55,6 +53,12 @@ class VideoController {
     public max_path_length = 400;
     public yatta_garbage_time = 0;
     public yatta_garbage_timeout = 10 * 1000;
+    public op_buffer = {};
+    public connected = false;
+    public lasurl = "http://steen.informatik.rwth-aachen.de:9914/";
+    public appCode = "vc";
+    public not_saved_annos_buffer = {};
+    public not_in_network_annos = {};
     
     /////public isPlaying: boolean = false;
     constructor(id='video_player') {   
@@ -137,10 +141,18 @@ class VideoController {
             //
             //console.log('measurment received new object:', new Date().getTime());
             //console.log('collab addProperty triggered', prop);
+            if (prop === 'not_saved') return;
+
             if (prop.indexOf(this.peerId) === -1 && prop.indexOf('://') === -1) {//not my object and not url              
                 for (var url in yatta.val()) {
-                    if (yatta.val(url).val(prop) !== undefined && yatta.val(url).val(prop) !== 'deleted') {                        
+                    if (yatta.val(url).val(prop) !== undefined && yatta.val(url).val(prop) !== 'deleted') {   //found added prop (its unique)                     
                         var anno = yatta.val(url).val(prop).val();
+                        var local_anno = videoCtr.get_anno_by_url_time(url, anno.time);
+                        if (local_anno !== null) { //loaded from server, but eventually not in network yet
+                            if (local_anno.not_in_network === true) {
+                                this.delete_anno_by_url_time(url, anno.time); //delete it locally, because someone else put it into the network
+                            }
+                        }
                         anno.doc = collab.unpackFromYatta(anno.doc);
                         console.log('collab received anno and unpacked', anno);
                         if (this.video.src === url) {
@@ -149,6 +161,7 @@ class VideoController {
                             //break;
                         }
                         else {
+                            if (anno.doc.type === 'i-text') anno.doc.text = 'text'; //hack
                             fabric.util.enlivenObjects([anno.doc], (objects) => {
                                 anno.doc = objects[0];
                                 this.video_anno_map[url] = this.video_anno_map[url] ? this.video_anno_map[url] : [];
@@ -177,14 +190,31 @@ class VideoController {
                
             }
         });
-
+        
         yatta.on('change', function (e, prop: string, op) {
             if (prop.indexOf('://') !== -1 ) return; // url
-            //console.log('collab Property change was triggered', this);
+            //console.log('collab Property change was triggered', this);            
+            if (prop === 'not_saved') return;
+            
+            /*if (videoCtr.isMaster) {
+                var time = this.replace_manager.parent.val().time;
+                if (time !== null && time !== undefined) {
+                    var videoURL = videoCtr.get_video_by_docId(id);
+                    if (videoURL === null) return;
+                    console.log('DG anno changed at:', videoURL, time);
+                    
+                    videoCtr.mark_anno_as_not_saved(videoURL, time);
+                }
+
+            }*/
+
             if (op.creator == yatta.getUserId()) {
-                //console.log("You changed the value of property '" + prop + "'!");
+                //console.log("You changed the value of property '" + prop + "'!");                
                 return;
             }
+
+            
+
             if (this.val(prop) === 'deleted') {
                // console.warn('have to delete stuff (TODO)', this.val());
                 videoCtr.delete_object(prop);
@@ -194,6 +224,8 @@ class VideoController {
             //console.log('measurment received new change:', new Date().getTime());
             console.log('collab changed recieved on prop', prop, this.val());
             var id = this.val('collab_id');
+
+            
             
             if (id) {
                 var doc = videoCtr.get_doc_by_id(id);
@@ -209,9 +241,21 @@ class VideoController {
                      }
                      videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
                  }*/
-                
+
                 doc[prop] = this.val(prop);
+                //doc.animate(prop, this.val(prop), { onChange: videoCtr.canvas.renderAll.bind(canvas) });
                 videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
+
+                if (videoCtr.isMaster) {
+                    var time = this.replace_manager.parent.val().time;
+                    if (time !== null && time !== undefined) {
+                        console.log('DG anno changed at:', time);
+                        var videoURL = videoCtr.get_video_by_docId(id);
+                        videoCtr.mark_anno_as_not_saved(videoURL, time);
+                    }
+                    
+                }
+
             }   
             
         });
@@ -237,8 +281,49 @@ class VideoController {
             //console.log('keypress!', event.keyCode);
         });
 
+        setInterval(() => { videoCtr.flushBuffer() }, 200);
+
+        yatta.getConnector().peer.on('connection', () => {
+            HACK_JOIN_COUNTER = 0;
+            locallySendIntent("CONNECTION_STATUS", {status:'connected'});
+            videoCtr.connected = true;
+            /*setTimeout(function () {
+                if (yatta.val(videoCtr.video.src) === undefined) { //nobody in the network requested the annos for this video yet.
+                    getVideoSegments(videoCtr.video.src, function (stat, anno) {
+                        if (stat !== 200) console.error('Could not retrieve annotations.');
+                        if (stat === 200) console.log('DG retreived anno:', anno);
+                    });
+                }
+            }, 3000);*/
+        });
+
+        yatta.getConnector().peer.on('close', () => {
+            HACK_JOIN_COUNTER = 0;
+            locallySendIntent("CONNECTION_STATUS", { status: 'close' });
+            videoCtr.connected = false;
+        });
+
+        yatta.getConnector().peer.on('disconnected', () => {
+            HACK_JOIN_COUNTER = 0;
+            locallySendIntent("CONNECTION_STATUS", { status: 'disconnected' });
+            videoCtr.connected = true;
+        });
+
+        locallySendIntent("GET_LAS_INFO");
+
         //this.yatta_garbage_time = setInterval(() => { console.log('clearing garbage!'); yatta.HB.emptyGarbage(); }, this.yatta_garbage_timeout);
         
+    }
+
+    public flushBuffer() {
+        for (var url in videoCtr.op_buffer)
+            for (var id in videoCtr.op_buffer[url])
+                for (var prop in videoCtr.op_buffer[url][id]) {
+                    var len = videoCtr.op_buffer[url][id][prop].length;
+                    yatta.val(url).val(id).val('doc').val(prop, videoCtr.op_buffer[url][id][prop][len - 1]);
+                    delete videoCtr.op_buffer[url][id][prop];
+                }
+
     }
 
     public set_video_time(time) {
@@ -247,6 +332,19 @@ class VideoController {
         this.canvas.clear();
         
     }
+
+    public mark_anno_as_not_saved(videoURL: string, time: number) {
+        if (yatta.val(videoURL) === undefined) return; // loaded from server, not in network yet.
+        if (this.not_saved_annos_buffer[videoURL] === undefined) {
+            this.not_saved_annos_buffer[videoURL] = [];
+        }
+        if (this.not_saved_annos_buffer[videoURL].indexOf(time) === -1) {
+            this.not_saved_annos_buffer[videoURL].push(time);
+            yatta.val(videoURL).val('not_saved', this.not_saved_annos_buffer[videoURL]);
+        }
+    }
+
+    
 
 
     
@@ -280,7 +378,7 @@ class VideoController {
 
         //clearInterval(videoCtr.yatta_garbage_time);
         //videoCtr.yatta_garbage_time = setInterval(() => { console.log('clearing garbage!'); yatta.HB.emptyGarbage(); }, videoCtr.yatta_garbage_timeout);
-
+        
         var prepDoc = collab.prepareForYatta(object);
         //console.log('collab json fabric', prepDoc); 
         var anno = { time: time, doc: prepDoc };
@@ -325,11 +423,20 @@ class VideoController {
 
         var tempYatta = yatta.val(videoCtr.video.src).val(id).val('doc').val();
 
+        if(videoCtr)
+
         videoCtr.svg_adapter.handle_diverged_props(tempJson, tempYatta, (prop) => {
-                //console.log('would change:', prop, tempJson[prop], tempJSON2[prop]);
-                //yatta.val(id).val('doc').val(prop, tempJson[prop]);
+            //console.log('would change:', prop, tempJson[prop], tempJSON2[prop]);
+            //yatta.val(id).val('doc').val(prop, tempJson[prop]);
             //console.log('measurment new change:', new Date().getTime());
-                yatta.val(videoCtr.video.src).val(id).val('doc').val(prop, tempJson[prop]);
+            if (videoCtr.op_buffer[videoCtr.video.src] === undefined) videoCtr.op_buffer[videoCtr.video.src] = {};
+            //console.log('buffer',videoCtr.op_buffer);
+            if (videoCtr.op_buffer[videoCtr.video.src][id] === undefined) videoCtr.op_buffer[videoCtr.video.src][id] = {};
+            //console.log('buffer', videoCtr.op_buffer);
+            if (videoCtr.op_buffer[videoCtr.video.src][id][prop] === undefined) videoCtr.op_buffer[videoCtr.video.src][id][prop] = [];
+
+            videoCtr.op_buffer[videoCtr.video.src][id][prop].push(tempJson[prop]);
+               // yatta.val(videoCtr.video.src).val(id).val('doc').val(prop, tempJson[prop]);
             });
 
         /*var tempYatta = collab.unpackFromYatta(yatta.val(videoCtr.video.src).val(id).val('doc').val());
@@ -354,6 +461,7 @@ class VideoController {
     public update_anno(anno: any) {
         //console.log('collab time', new Date().getTime());
         var curr_anno = this.annotation_at(anno.time); //get 'near' annotation if any
+        
         if (!curr_anno) {
             var intent = {
                 "component": "",
@@ -394,10 +502,12 @@ class VideoController {
 
         }
         else {
+            
             if (anno.doc.type === 'i-text') anno.doc.text = 'text'; //hack, because yatta sets it to undefined
+            
                 fabric.util.enlivenObjects([anno.doc], (objects) => {
                     anno.doc = objects[0];
-                    console.log('collab fabric enlivenObjects', anno.doc);
+                    
                     //this.canvas.add(objects[0]);
                     var curr_anno = this.annotation_at(anno.time); //get 'near' annotation if any
                     if (!curr_anno)
@@ -434,6 +544,26 @@ class VideoController {
             }
         }
         return res;         
+    }
+
+    public get_anno_by_url_time(url, time) {
+        if (this.video_anno_map[url] === undefined) return null;
+        for (var i = 0; i < this.video_anno_map[url].length; i++) {
+            if (this.video_anno_map[url][i].time === time)
+                return this.video_anno_map[url][i];
+        }
+        return null;   
+    }
+
+    public delete_anno_by_url_time(url, time) {
+        if (this.video_anno_map[url] === undefined) return false;
+        for (var i = 0; i < this.video_anno_map[url].length; i++) {
+            if (this.video_anno_map[url][i].time === time) {
+                this.video_anno_map[url].splice(i,1);
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -510,36 +640,55 @@ class VideoController {
         }
        // if (res != this.last_displayed_anno) {
         this.canvas.clear();
-
-            //if (!this.video.paused) {
+        /*var deactivate = false;
+        if (res.doc[0].get('collab_id') !== undefined) {
             this.canvas.off('object:added');
-            if (res.doc instanceof Array) {
-                res.doc.forEach((a) => {
-                    try {
-
+            deactivate = true;
+        }*/
+        this.canvas.off('object:added');
+        
+        if (res.doc instanceof Array) {
+           /* var docClone = [];
+            res.doc.forEach((a) => {
+                var cloneObj;
+                var test = a.clone(function (obj) { console.log('cloned obj1', obj); cloneObj = obj; }, []);
+                cloneObj = test ? test : cloneObj;
+                docClone.push(cloneObj);
+            });
+            if (deactivate === false) {
+                docClone = res.doc;
+            }
+            else {
+                res.doc = [];
+            }*/
+               // docClone.forEach((a, index) => {
+                res.doc.forEach((a,index) => {
+                    try {                                           
+                         
                         this.canvas.add(a);
+                        
                     }
                     catch (e) {
                         console.error(e);
                     }
                 });
+            if (res.not_in_network === true)
+                this.add_video_annos_to_network(this.video.src);
+            
+
+                console.log("DG loaded from server",res.doc);
+                
             }
             else
                 this.canvas.add(res.doc);
 
-        //this.canvas.renderAll();
-
-            this.canvas.on('object:added', (a) => { this.svg_adapter.on_object_added(a.target); });
+        //if (res.doc[0].get('collab_id') !== undefined)
+            //if(deactivate === true)
+                this.canvas.on('object:added', (a) => { this.svg_adapter.on_object_added(a.target); });
+     
       //  }
 
             
-            if (temporal) {
-                this.video.pause();
-                window.setTimeout(() => {
-                    this.canvas.clear();
-                    this.video.play();
-                }, 3000);
-            }
 
         if (cacheActive) {
             this.canvas.setActiveObject(cacheActive);
@@ -550,6 +699,27 @@ class VideoController {
             }
         }
         return res;
+    }
+
+    public add_video_annos_to_network(videoURL) {
+        this.video_anno_map[videoURL].forEach((anno) => {
+            if (anno.not_in_network === true) {
+                //if (a.get('collab_id') === undefined) { // when new stuff is loaded from the server but not pushed into the network yet.
+                
+                anno.doc.forEach((a, index) => {
+                    var id = this.peerId + '_' + this.fabricCounter++;
+                    a.set('collab_id', id);
+                    var prepDoc = collab.prepareForYatta(a);
+                    var anno2 = { time: anno.time, doc: prepDoc };
+                    if (yatta.val(this.video.src) === undefined)
+                        yatta.val(this.video.src, {}, "immutable");
+                    yatta.val(this.video.src).val(id, anno2, "immutable");
+                });
+
+                delete anno.not_in_network;
+                
+            } 
+        });
     }
 
     public registerPeerId(peerId) {
@@ -688,10 +858,35 @@ class VideoController {
 
         if (!this.video_anno_map[url]) {
             this.video_anno_map[url] = [];
+
+
         }
 
         this.annotations = this.video_anno_map[url];
         this.display_annotation_at(0, false);
+
+        if (this.annotations.length === 0) {
+            console.log('DG start retreiving annos...');            
+            getVideoSegments(url, (stat, annos) => {
+                    if (stat !== 200) console.error('Could not retrieve annotations.');
+                if (stat === 200) {
+                    console.log('DG retreived annos:', annos);
+                    this.video_anno_map[url] = annos;
+                    /*this.not_in_network_annos[url] = [];
+                    annos.forEach((anno) => {
+                        this.not_in_network_annos[url].push(anno.time);
+                    });*/
+                    annos.forEach((anno) => {
+                        anno.not_in_network = true;
+                    });
+                    this.annotations = this.video_anno_map[url];
+                    this.display_annotation_at(0, false);
+                    this.annotations.forEach((anno) => {
+                        locallySendIntent("NEW_ANNOTATION", { "time": anno.time });
+                    });
+                }
+            });
+        }
 
         this.annotations.forEach((anno) => {
             locallySendIntent("NEW_ANNOTATION", { "time": anno.time });
@@ -702,17 +897,11 @@ class VideoController {
     public master_changed(isMaster) {
         this.isMaster = isMaster;
         console.log('became master', this.isMaster);
-        if (this.isMaster) {
-            if (this.annotations.length === 0) { //maybe there is some data on the server
-                fabric.loadSVGFromURL('http://golovin.de/ba/media/awesome.svg', (objs) => {
-                    objs.forEach((obj) => {
-                        console.log('master added from server',obj);
-                       // this.on_object_added(obj, 'http://137.226.58.2:8888/v1/AUTH_451035e5f9504a878946697522070c43/public/00022.mp4', 200);
-                    });
-                    
-                });
-            }
+        if (this.isMaster && this.server_updater_timer === 0) {            
             this.start_server_updater();
+        }
+        else {
+            this.stop_server_updater();
         }
     }
 
@@ -726,16 +915,36 @@ class VideoController {
 
     public start_server_updater() {
         this.server_updater_timer = setInterval(() => {
-            console.log('Update Server');
-        }, 5000);
+            
+            var j = 0;
+            for (var url in this.not_saved_annos_buffer)
+                for (var i = 0; i < this.not_saved_annos_buffer[url]; i++) {
+                    var time = this.not_saved_annos_buffer[url].pop();
+                    var AnnoStr = JSON.stringify(this.get_anno_by_url_time(url, time).doc);
+                    j++;
+                    updateVideoSegmentByTime(url, time.toString(), AnnoStr, function (stat) {
+                        if (stat === 200) {
+                            console.log('successfully updated server');
+                            yatta.val(url).val('not_saved', videoCtr.not_saved_annos_buffer[url]);
+                            
+                        }
+                        else {
+                            console.error('could not update server. Status:', stat);
+                        }
+                    });
+                }
+            console.log('Pushed annos to Server', j);                         
+              
+        }, 10000);
     }
 
     public stop_server_updater() {
         clearInterval(this.server_updater_timer);
+        this.server_updater_timer = 0;
     }
 
     public on_xmpp_connection() {
-        HACK_JOIN_COUNTER = 2; //next REGISTER_MY_PEERID will succeed (hopefully)
+       // HACK_JOIN_COUNTER = 2; //next REGISTER_MY_PEERID will succeed (hopefully)
     }
 
     public delete_selected() {
@@ -869,6 +1078,8 @@ function router(intent) {
             if (intent.extras.widget === 'controls') { //if controler widget is loaded after video_canvas
                 videoCtr.annotations.forEach((anno) => {                   
                     locallySendIntent("NEW_ANNOTATION", { "time": anno.time });
+                    if (videoCtr.connected)
+                        locallySendIntent("CONNECTED");
                 });
                 locallySendIntent("UPDATE_VIDEO_DURATION", { "duration": videoCtr.duration.toString() }); 
                 locallySendIntent("PEED_ID", { "peerId": videoCtr.peerId });
@@ -884,7 +1095,30 @@ function router(intent) {
            
             //TODO: only master boradcasts data of all users
             videoCtr.master_changed( intent.extras.isMaster);
-            break; 
+            break;
+         case "RESTORE_LAS_SESSION":
+               /* if (lasClient.getStatus() == "loggedIn") {
+                    var userName = lasClient.getUsername();
+                    var sessionId = lasClient.getSessionId();
+                    var sessionInfo = {
+                        "userName": userName,
+                        "session": sessionId
+                    };
+                    var resIntent = {
+                        "action": "LAS_SESSION",
+                        "component": "",
+                        "data": "",
+                        "dataType": "",
+                        "extras": sessionInfo
+                    };
+                    duiClient.publishToUser(resIntent);
+                }*/
+             break; 
+        case "LAS_INFO":
+        console.log("allvideo-drawings: LAS_INFO.");
+        if (lasClient.getStatus != "loggedIn" && intent.extras != null && intent.extras.userName != null && intent.extras.session != null)
+            lasClient.setCustomSessionData(intent.extras.session, intent.extras.userName, videoCtr.lasurl, videoCtr.appCode);
+        break;
     }
 
     routerNetwork(intent);
@@ -893,6 +1127,122 @@ function router(intent) {
 
 //yatta.getConnector().setIwcHandler(router);
 iwcClient.connect(router);
+
+function getMpeg7MediaIds() {
+    var videoURLs = null,
+    thumbnailsURLs = null,
+    videoNames = new Array(),
+    uploaderNames = new Array(),
+    serviceName = "mpeg7_multimediacontent_service",
+    methodName2 = "getMediaURLs",
+    uploader = "uploader",
+    parametersAsJSONArray = new Array();
+    //console.log(lasClient);
+    lasClient.invoke(serviceName, methodName2, parametersAsJSONArray, function (stat, res) { console.log("DG: ",stat,res);});
+}
+var SVG;
+function getVideoSegments(mediaURL, callback) {
+    var serviceName = "mpeg7_multimediacontent_service",
+        methodName = "getVideoSegments",
+        parametersAsJSONArray = new Array();
+        parametersAsJSONArray[0] = {
+            "type": "String",
+            "value": mediaURL
+        };
+    //console.log(lasClient);
+    lasClient.invoke(serviceName, methodName, parametersAsJSONArray, function (stat, res) {
+        console.log("DG getVideoSegments status: ", stat);
+        console.log("DG getVideoSegments result: ", res);
+        var annos = [];
+        for (var i = 0; i < res.value.length; i += 2) {
+            //console.log("DG putting ", res.value[i]);
+            var json_string = res.value[i];
+           // console.log("DG time: ", parseFloat(res.value[i + 1]));
+            var timepoint = parseFloat(res.value[i + 1]);
+            
+            var objs = JSON.parse(json_string);
+            //console.log("DG objs:",objs);
+            fabric.util.enlivenObjects(objs, function (objects) {
+                annos.push({ time: timepoint, doc: objects });
+                if (annos.length === res.value.length/2)
+                    callback(stat, annos);
+            });
+
+        }
+        
+
+    });
+
+}
+
+function setVideoSegment(mediaURL, timepoint, SVG) {
+    var videoURL = "http://tosini.informatik.rwth-aachen.de:8134/videos/construction.mp4",
+
+        serviceName = "mpeg7_multimediacontent_service",
+        methodName = "setVideoSegment",
+        parametersAsJSONArray = new Array();
+    parametersAsJSONArray[0] = {
+        "type": "String",
+        "value": mediaURL
+    };
+    parametersAsJSONArray[1] = {
+        "type": "String",
+        "value": timepoint
+    };
+    parametersAsJSONArray[2] = {
+        "type": "String",
+        "value": SVG
+    };
+    //console.log(lasClient);
+    lasClient.invoke(serviceName, methodName, parametersAsJSONArray, function (stat, res) {
+        console.log("DG setVideoSegment status: ", stat);
+        console.log("DG setVideoSegment result: ", res);
+    });
+}
+
+function removeVideoSegmentByTime(mediaURL, timepoint) {
+    var serviceName = "mpeg7_multimediacontent_service",
+        methodName = "removeVideoSegmentByTime",
+        parametersAsJSONArray = new Array();
+    parametersAsJSONArray[0] = {
+        "type": "String",
+        "value": mediaURL
+    };
+    parametersAsJSONArray[1] = {
+        "type": "String",
+        "value": timepoint
+    };
+    //console.log(lasClient);
+    lasClient.invoke(serviceName, methodName, parametersAsJSONArray, function (stat, res) {
+        console.log("DG removeVideoSegmentByTime status: ", stat);
+        console.log("DG removeVideoSegmentByTime result: ", res);
+    });
+}
+
+function updateVideoSegmentByTime(mediaURL, timepoint, SVG, callback) {
+    if (mediaURL === "http://golovin.de/ba/parking.mp4") return;
+    var serviceName = "mpeg7_multimediacontent_service",
+        methodName = "updateVideoSegmentByTime",
+        parametersAsJSONArray = new Array();
+    parametersAsJSONArray[0] = {
+        "type": "String",
+        "value": mediaURL
+    };
+    parametersAsJSONArray[1] = {
+        "type": "String",
+        "value": timepoint
+    };
+    parametersAsJSONArray[2] = {
+        "type": "String",
+        "value": SVG
+    };
+    //console.log(lasClient);
+    lasClient.invoke(serviceName, methodName, parametersAsJSONArray, function (stat, res) {
+        callback(stat);
+        //console.log("DG updateVideoSegmentByTime status: ", stat);
+        //console.log("DG updateVideoSegmentByTime result: ", res);
+    });
+}
 
 
 function locallySendIntent(action:string, extras= {}) {
@@ -909,6 +1259,71 @@ function locallySendIntent(action:string, extras= {}) {
     iwcClient.publish(intent);
 }
 
+function testImportSVG() {
+    console.log("SVG: ",SVG);
+    fabric.loadSVGFromString(SVG, function (objs, opts) {
+        console.log(objs);
+            for (var i = 0; i < objs.length; i++) {
+                videoCtr.canvas.add(objs[i]);
+            }
+
+        
+        videoCtr.canvas.renderAll();
+        
+    });
+}
+
+function testExportSVG() {
+    SVG = videoCtr.canvas.toSVG();
+    console.log("SVG: ", SVG);
+}
+var JSONTest;
+function testImportJSON() {
+      /*  
+    videoCtr.canvas.loadFromJSON(JSONTest, function (objs, opts) {
+        console.log(objs);
+        for (var i = 0; i < objs.length; i++) {
+            videoCtr.canvas.add(objs[i]);
+        }
+        
+    });*/
+
+    var objs = JSON.parse(JSONTest).objects;
+    //console.log("DG objs:",objs);
+    fabric.util.enlivenObjects(objs, function (objects) {
+        for (var i = 0; i < objects.length; i++) {
+            videoCtr.canvas.add(objects[i]);
+        }
+    });
+
+    videoCtr.canvas.renderAll();
+
+    
+
+    
+}
+
+function testExportJSON() {
+    JSONTest = JSON.stringify( videoCtr.canvas.toJSON());
+    console.log("JSON: ", JSONTest);
+}
+
+/*
+var lasClient = new LasAjaxClient("video drawer", lasFeedbackHandler);
+
+var serviceName = "mpeg7_multimediacontent_service";
+var methodName2 = "getVideoThumbnails";
+var parametersAsJSONArray = new Array();
+
+ parametersAsJSONArray[0] = {
+    "type": "String[]",
+    "value": []
+};
+
+console.log(lasClient);
+lasClient.invoke(serviceName, methodName2, parametersAsJSONArray, function (status, result) {
+    console.log("status:", status, "result:",result);
+});*/
 
 /*////////////////
 var canvas;
