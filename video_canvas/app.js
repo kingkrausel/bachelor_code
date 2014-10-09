@@ -201,7 +201,7 @@ var VideoController = (function () {
             if (op.creator == yatta.getUserId()) {
                 //console.log("You changed the value of property '" + prop + "'!");
                 //if (prop === 'text')
-                return;
+                // return;
             }
 
             if (this.val(prop) === 'deleted') {
@@ -650,9 +650,11 @@ var VideoController = (function () {
         if (cacheActive) {
             this.canvas.setActiveObject(cacheActive);
             if (cacheActive instanceof fabric.IText) {
-                cacheActive.isEditing = isEditing;
+                if (isEditing) {
+                    cacheActive.isEditing = false;
+                    cacheActive.enterEditing();
+                }
                 console.log('set editing', isEditing);
-                this.canvas.getActiveObject().isEditing = isEditing;
             }
         }
         return res;
