@@ -91,6 +91,7 @@
     // Y.createIwcConnector(function(Connector, user_id){
       HACK_LOADED_COUNTER++;
         yatta = new Y.JsonFramework(user_id, Connector);
+        yatta.HB.setGarbageCollectTimeout(10000);
         console.log("initialized Yatta",user_id);        
         yatta.setMutableDefault('immutable');
         //yatta.HB.setGarbageCollectTimeout(30000);

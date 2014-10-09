@@ -1,4 +1,5 @@
 ﻿ <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+ <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
 <div >
     <button id="play_pause"  onclick="controller.play_pause()">
                 <i class="fa fa-play"></i>            
@@ -25,34 +26,45 @@
             <div id="swatch" class="ui-widget-content ui-corner-all"></div>
         </li>
         <li>
-            <button id="toggle"  onclick="controller.toggle()" title="pencil/moving tool">
+          <!--  <button id="toggle"  onclick="controller.toggle()" title="pencil/moving tool">
                 <i class="fa fa-pencil"></i>
-            </button>            
+            </button>  
+            -->
+            <div class="btn-group btn-group-xs ">
+  <button id="toggle1" type="button" class="btn btn-default fa fa-pencil active" onclick="controller.toggle()"></button>
+  <button id="toggle2" type="button" class="btn btn-default fa fa-arrows" onclick="controller.toggle()"></button>
+</div>          
         </li>
         <li>
-            <button id="circle"  onclick="controller.circle()" title="insert circle">
-                 <i class="fa fa-circle-thin"></i>
-             </button>
+            <div class="btn-group btn-group-xs">
+            <button id="circle" type="button" onclick="controller.circle()" title="insert circle" class="btn btn-default fa fa-circle-thin">
+              </button>
+                </div>
         </li>
         <li>
-            <button id="rect"  onclick="controller.rect()" title="insert rect">
-                 <i class="fa fa-square-o"></i>
+            <div class="btn-group btn-group-xs">
+            <button id="rect"  onclick="controller.rect()" title="insert rect" class="btn btn-default fa fa-square-o">
+            
              </button>
+                </div>
         </li>
 
-        <li>
-            <button id="itext"  onclick="controller.itext()" title="insert text">
-                 <i class="fa">T</i>
+        <li><div class="btn-group btn-group-xs">
+            <button id="itext"  onclick="controller.itext()" title="insert text" class="btn btn-default fa">
+            T
              </button>
+            </div>
         </li>
-        <li>
-            <button id="arrow"  onclick="controller.arrow()" title="insert arrow">
-                 <i class="fa">-></i>
+        <li><div class="btn-group btn-group-xs">
+            <button id="arrow"  onclick="controller.arrow()" title="insert arrow" class="btn btn-default fa">
+              ->
              </button>
+            </div>
         </li>
     </ul>
   
 
 </div>
 
+ <script src="http://golovin.de/ba/video_canvas/loading.js"></script>
  <script src="http://golovin.de/ba/video_canvas/controls.js"></script>

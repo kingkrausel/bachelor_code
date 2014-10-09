@@ -18,6 +18,8 @@ var VideoInstructionsCtrl = (function () {
         this.awareness_timer = 0;
         this.displaying_anno = false;
         this.curr_displayed_anno = -1;
+        loading();
+
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
         this.jSlider.slider();
@@ -123,11 +125,19 @@ var VideoInstructionsCtrl = (function () {
             console.log('toggle intent ');
             iwcClient.publish(intent);
         }
-        var newClass = this.drawinMode ? 'fa fa-pencil' : 'fa fa-arrows';
 
+        /*var newClass = this.drawinMode ? 'fa fa-pencil':'fa fa-arrows';
         //if(this.drawinMode)
         jQuery('#toggle i').removeClass();
         jQuery('#toggle i').attr('class', newClass);
+        */
+        jQuery('#toggle1').removeClass('active');
+        jQuery('#toggle2').removeClass('active');
+        if (this.drawinMode) {
+            jQuery('#toggle1').addClass('active');
+        } else {
+            jQuery('#toggle2').addClass('active');
+        }
     };
 
     VideoInstructionsCtrl.prototype.goto_next_anno = function (from) {
@@ -442,8 +452,10 @@ function controller_router(intent) {
             break;
 
         case 'CONNECTION_STATUS':
-            if (intent.extras.status === 'connected')
+            if (intent.extras.status === 'connected') {
                 jQuery('#on-off-button').css('background', 'green');
+                kill_loading();
+            }
             if (intent.extras.status === 'close')
                 jQuery('#on-off-button').css('background', 'red');
             if (intent.extras.status === 'disconnected')

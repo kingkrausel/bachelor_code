@@ -198,6 +198,7 @@
     <Content Include="jquery-ui-pips\jquery-ui-slider-pips.css" />
     <Content Include="jquery-ui-pips\jquery-ui-slider-pips.min.js" />
     <Content Include="lib\fabric.min.js" />
+    <Content Include="loading.js" />
     <Content Include="login.xml" />
     <Content Include="networkCtr.ts" />
     <Content Include="OpenCoweb-jsoe\config_OUT.js" />

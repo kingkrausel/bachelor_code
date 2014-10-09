@@ -27,7 +27,7 @@ declare var iwc: any, iwcClient: any, collab: Collaboration, yatta: any, LasAjax
 var SVG_TEST;
 var SVG_ARROW = '<?xml version="1.0" encoding="utf-8"?> <!-- Generator: Adobe Illustrator 16.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0) --> <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"> <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="104.08px" height="94.747px" viewBox="0 0 104.08 94.747" enable-background="new 0 0 104.08 94.747" xml:space="preserve"> <path d="M104.08,47.374L56.707,94.747l-1.414-1.414l45.959-45.959L55.293,1.414L56.707,0L104.08,47.374z M100.112,46.374H0v2 h100.112V46.374z"/> </svg> ';
 var HACK_JOIN_NTWRK = 0;
-var HACK_JOIN_COUNTER = 30;
+var HACK_JOIN_COUNTER = 60;
 var DEVELOPMENT = true;
 
 class VideoController {
@@ -61,7 +61,8 @@ class VideoController {
     public not_in_network_annos = {};
     
     /////public isPlaying: boolean = false;
-    constructor(id='video_player') {   
+    constructor(id= 'video_player') {  
+        loading(); 
         this.video = <HTMLVideoElement>document.getElementById(id);
         this.start_video_observer();
         fabric.loadSVGFromString(SVG_ARROW, (objs, options) => { this.fabric_arrow = objs[0];});
@@ -143,9 +144,12 @@ class VideoController {
             //console.log('collab addProperty triggered', prop);
             if (prop === 'not_saved') return;
 
-            if (prop.indexOf(this.peerId) === -1 && prop.indexOf('://') === -1) {//not my object and not url              
+            if (prop.indexOf(this.peerId) === -1 && prop.indexOf('://') === -1) {//not my object and not url   
+
+                          
                 for (var url in yatta.val()) {
                     if (yatta.val(url).val(prop) !== undefined && yatta.val(url).val(prop) !== 'deleted') {   //found added prop (its unique)                     
+                        console.log('DG add object:', prop); 
                         var anno = yatta.val(url).val(prop).val();
                         var local_anno = videoCtr.get_anno_by_url_time(url, anno.time);
                         if (local_anno !== null) { //loaded from server, but eventually not in network yet
@@ -195,7 +199,6 @@ class VideoController {
             if (prop.indexOf('://') !== -1 ) return; // url
             //console.log('collab Property change was triggered', this);            
             if (prop === 'not_saved') return;
-            
             /*if (videoCtr.isMaster) {
                 var time = this.replace_manager.parent.val().time;
                 if (time !== null && time !== undefined) {
@@ -210,7 +213,8 @@ class VideoController {
 
             if (op.creator == yatta.getUserId()) {
                 //console.log("You changed the value of property '" + prop + "'!");                
-                return;
+                //if (prop === 'text')
+                    return;
             }
 
             
@@ -222,14 +226,15 @@ class VideoController {
                 return;
             }
             //console.log('measurment received new change:', new Date().getTime());
-            console.log('collab changed recieved on prop', prop, this.val());
+            
             var id = this.val('collab_id');
 
             
             
             if (id) {
                 var doc = videoCtr.get_doc_by_id(id);
-                console.log('collab doc', doc);
+                //console.log('collab doc', doc);
+                if (doc === null) return;
                 /* if (doc[prop] !== this.val(prop)) { //remote change or nearly euqivalent numbers
 
                      if (typeof this.val(prop) === 'number') {
@@ -242,6 +247,7 @@ class VideoController {
                      videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
                  }*/
 
+                console.log('collab changed recieved on prop', prop, this.val(prop));
                 doc[prop] = this.val(prop);
                 //doc.animate(prop, this.val(prop), { onChange: videoCtr.canvas.renderAll.bind(canvas) });
                 videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
@@ -287,15 +293,9 @@ class VideoController {
             HACK_JOIN_COUNTER = 0;
             locallySendIntent("CONNECTION_STATUS", {status:'connected'});
             videoCtr.connected = true;
-            /*setTimeout(function () {
-                if (yatta.val(videoCtr.video.src) === undefined) { //nobody in the network requested the annos for this video yet.
-                    getVideoSegments(videoCtr.video.src, function (stat, anno) {
-                        if (stat !== 200) console.error('Could not retrieve annotations.');
-                        if (stat === 200) console.log('DG retreived anno:', anno);
-                    });
-                }
-            }, 3000);*/
+            kill_loading();
         });
+
 
         yatta.getConnector().peer.on('close', () => {
             HACK_JOIN_COUNTER = 0;
@@ -355,7 +355,8 @@ class VideoController {
         if (object instanceof fabric.Path) {
             if (object.path.length > videoCtr.max_path_length) {
                 videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
-                console.warn('Too long path inserted, ignore it.');
+                //console.warn('Too long path inserted, ignore it.');
+                videoCtr.show_error_message('Path was too long.');
                 return;
             }
         }
@@ -676,7 +677,7 @@ class VideoController {
                 this.add_video_annos_to_network(this.video.src);
             
 
-                console.log("DG loaded from server",res.doc);
+                //console.log("DG loaded from server",res.doc);
                 
             }
             else
@@ -727,7 +728,10 @@ class VideoController {
         if (this.collabPeerIds.indexOf(peerId) !== -1) return; //already in our array
         this.collabPeerIds.push(peerId);
         yatta.connector.connectToPeer(peerId); //two way connection
-
+        locallySendIntent("CONNECTION_STATUS", { status: 'connected' });
+        videoCtr.connected = true;
+        kill_loading();
+        
     }
 
     public update_color(color) {
@@ -1003,6 +1007,31 @@ class VideoController {
         
         
         //console.log('after remove', toDelete);
+    }
+
+    public show_error_message(text: string) {
+        this.canvas.off('object:added');
+        var iText = new fabric.IText(text);
+        //iText.set('error_message', true);
+
+        var error_message_id = 'error_message_' + this.fabricCounter++;
+        iText.set('collab_id', error_message_id);
+        iText.selectable = false;
+        iText.fontSize = 20;
+        iText.setOptions({ stroke: 'red' });
+        var anno = videoCtr.annotation_at(this.video.currentTime);
+        var time = this.video.currentTime;
+        if (anno !== null) {
+            anno.doc.push(iText);
+            this.display_annotation_at(this.video.currentTime);
+            setTimeout(() => {
+                videoCtr.delete_object(error_message_id);
+                if (this.video.currentTime === time)
+                    this.display_annotation_at(this.video.currentTime);
+            }, 2000);
+
+        }
+        this.canvas.on('object:added', (a) => { this.svg_adapter.on_object_added(a.target); });
     }
     
 }
@@ -1307,6 +1336,8 @@ function testExportJSON() {
     JSONTest = JSON.stringify( videoCtr.canvas.toJSON());
     console.log("JSON: ", JSONTest);
 }
+
+
 
 /*
 var lasClient = new LasAjaxClient("video drawer", lasFeedbackHandler);
