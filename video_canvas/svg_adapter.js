@@ -181,7 +181,7 @@ var Adapter = (function () {
                         if (JSON.stringify(a[prop]) !== JSON.stringify(b[prop]))
                             callback(prop);
                     } catch (e) {
-                        console.warn('versions may be diverged: Unterschiede konnten nicht korrekt überprüft werden(handle_diverged_props).');
+                        console.warn('versions may be diverged: Unterschiede konnten nicht korrekt überprüft werden(handle_diverged_props). In prop:', prop);
                     }
                 }
             }

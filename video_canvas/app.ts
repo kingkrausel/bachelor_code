@@ -19,6 +19,7 @@ var lasFeedbackHandler = function (statusCode, message) {
 
 };
 
+
 var lasClient = new LasAjaxClient("video drawer", lasFeedbackHandler);
 
 
@@ -28,6 +29,7 @@ var SVG_TEST;
 var SVG_ARROW = '<?xml version="1.0" encoding="utf-8"?> <!-- Generator: Adobe Illustrator 16.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0) --> <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"> <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="104.08px" height="94.747px" viewBox="0 0 104.08 94.747" enable-background="new 0 0 104.08 94.747" xml:space="preserve"> <path d="M104.08,47.374L56.707,94.747l-1.414-1.414l45.959-45.959L55.293,1.414L56.707,0L104.08,47.374z M100.112,46.374H0v2 h100.112V46.374z"/> </svg> ';
 var HACK_JOIN_NTWRK = 0;
 var HACK_JOIN_COUNTER = 60;
+var HACK_FABRIC_E = null;
 var DEVELOPMENT = true;
 
 class VideoController {
@@ -62,7 +64,7 @@ class VideoController {
     
     /////public isPlaying: boolean = false;
     constructor(id= 'video_player') {  
-        loading(); 
+        //loading(); 
         this.video = <HTMLVideoElement>document.getElementById(id);
         this.start_video_observer();
         fabric.loadSVGFromString(SVG_ARROW, (objs, options) => { this.fabric_arrow = objs[0];});
@@ -248,7 +250,14 @@ class VideoController {
                  }*/
 
                 console.log('collab changed recieved on prop', prop, this.val(prop));
-                doc[prop] = this.val(prop);
+                if (prop !== 'isEditing') {
+                    if (this.val(prop) instanceof Object) {
+                        doc[prop] = this.val(prop).val();
+                    }
+                    else {
+                        doc[prop] = this.val(prop);
+                    }
+                }
                 //doc.animate(prop, this.val(prop), { onChange: videoCtr.canvas.renderAll.bind(canvas) });
                 videoCtr.display_annotation_at(videoCtr.video.currentTime, false);
 
@@ -617,7 +626,7 @@ class VideoController {
     }*/
 
     public display_annotation_at(time = this.video.currentTime, temporal = true, threshold = 0.25) {
-
+        //return;
         var res = this.annotation_at(time);
         this.last_displayed_anno = this.curr_anno;
         this.curr_anno = res;
@@ -695,8 +704,38 @@ class VideoController {
             this.canvas.setActiveObject(cacheActive);
             if (cacheActive instanceof fabric.IText) {                
                 if (isEditing) {
-                    cacheActive.isEditing = false;
+                    //cacheActive.isEditing = false;
+                    cacheActive.exitEditing();
+                    //jQuery('textarea').remove();
                     cacheActive.enterEditing();
+                    $('textarea').bind('input propertychange', function () {
+                        var text = this.value;
+                        if (cacheActive.text.indexOf(text) !== 0) {
+                            // cacheActive.text = text + cacheActive.text.substring(text.length - 1, cacheActive.text.length);
+                            //console.log('HACK', text, cacheActive);
+                            cacheActive.onKeyPress(HACK_FABRIC_E);
+
+                            //cacheActive.text = text;
+                        }
+                        if (HACK_FABRIC_E.which === 8 || HACK_FABRIC_E.which === 46) {
+                            cacheActive.onKeyDown(HACK_FABRIC_E);
+                            HACK_FABRIC_E = null;
+                        }
+                        
+                    });//*/
+                    /*$("textarea").keydown(function () {
+                        console.log('HACK textarea keydown');
+                    });*/
+                    //$("textarea").attr('onkeydown', 'myFunction()');
+                    
+                    
+                   /* $("canvas").keydown(function () {
+                        console.log('HACK textarea keydown');
+                    });*/
+
+                    this.canvas.renderAll();
+                    cacheActive.initDelayedCursor();
+                    //cacheActive.cursorColor = 'red';
                 }
                 console.log('set editing', isEditing);
             }
@@ -901,7 +940,7 @@ class VideoController {
     }
 
     public master_changed(isMaster) {
-        this.isMaster = isMaster;
+        //this.isMaster = isMaster;
         console.log('became master', this.isMaster);
         if (this.isMaster && this.server_updater_timer === 0) {            
             this.start_server_updater();
@@ -926,18 +965,21 @@ class VideoController {
             for (var url in this.not_saved_annos_buffer)
                 for (var i = 0; i < this.not_saved_annos_buffer[url]; i++) {
                     var time = this.not_saved_annos_buffer[url].pop();
-                    var AnnoStr = JSON.stringify(this.get_anno_by_url_time(url, time).doc);
-                    j++;
-                    updateVideoSegmentByTime(url, time.toString(), AnnoStr, function (stat) {
-                        if (stat === 200) {
-                            console.log('successfully updated server');
-                            yatta.val(url).val('not_saved', videoCtr.not_saved_annos_buffer[url]);
-                            
-                        }
-                        else {
-                            console.error('could not update server. Status:', stat);
-                        }
-                    });
+                    var annoToStringify = this.get_anno_by_url_time(url, time);
+                    if (annoToStringify !== null) {
+                        var AnnoStr = JSON.stringify(annoToStringify.doc);
+                        j++;
+                        updateVideoSegmentByTime(url, time.toString(), AnnoStr, function (stat) {
+                            if (stat === 200) {
+                                console.log('successfully updated server');
+                                yatta.val(url).val('not_saved', videoCtr.not_saved_annos_buffer[url]);
+
+                            }
+                            else {
+                                console.error('could not update server. Status:', stat);
+                            }
+                        });
+                    }
                 }
             console.log('Pushed annos to Server', j);                         
               
@@ -1018,9 +1060,12 @@ class VideoController {
 
         var error_message_id = 'error_message_' + this.fabricCounter++;
         iText.set('collab_id', error_message_id);
+        iText.fontSize = 15;
+        iText.backgroundColor = '#EB4457';        
         iText.selectable = false;
-        iText.fontSize = 20;
-        iText.setOptions({ stroke: 'red' });
+        
+        //iText.setOptions({ stroke: 'red' });
+        
         var anno = videoCtr.annotation_at(this.video.currentTime);
         var time = this.video.currentTime;
         if (anno !== null) {
@@ -1250,6 +1295,26 @@ function removeVideoSegmentByTime(mediaURL, timepoint) {
     });
 }
 
+function removeAllVideoSegments(mediaURL) {
+    var serviceName = "mpeg7_multimediacontent_service",
+        methodName = "getVideoSegments",
+        parametersAsJSONArray = new Array();
+    parametersAsJSONArray[0] = {
+        "type": "String",
+        "value": mediaURL
+    };
+    //console.log(lasClient);
+    lasClient.invoke(serviceName, methodName, parametersAsJSONArray, function (stat, res) {
+        console.log("DG getVideoSegments status: ", stat);
+        console.log("DG getVideoSegments result: ", res);
+        var annos = [];
+        for (var i = 1; i < res.value.length; i += 2) {
+            removeVideoSegmentByTime(mediaURL, res.value[i]);
+        }
+    });
+}
+
+
 function updateVideoSegmentByTime(mediaURL, timepoint, SVG, callback) {
     if (mediaURL === "http://golovin.de/ba/parking.mp4") return;
     var serviceName = "mpeg7_multimediacontent_service",
@@ -1338,8 +1403,22 @@ function testExportJSON() {
     JSONTest = JSON.stringify( videoCtr.canvas.toJSON());
     console.log("JSON: ", JSONTest);
 }
+/*
+function myFunction(e) {
+    console.log('HACK myfunction called!', e);
+    HACK_FABRIC_E = e;
+}*/
+$("body").keydown((e) => {
+    if (e.originalEvent.which === 8 || e.originalEvent.which === 46) {
+        HACK_FABRIC_E = e.originalEvent;
 
-
+        console.log('HACK original event DOWN', e.originalEvent);
+    }
+});
+$("body").keypress((e) => {
+    HACK_FABRIC_E = e.originalEvent;
+    console.log('HACK original event keypress', HACK_FABRIC_E);
+});
 
 /*
 var lasClient = new LasAjaxClient("video drawer", lasFeedbackHandler);

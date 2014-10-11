@@ -24,14 +24,26 @@ class VideoInstructionsCtrl {
     public curr_displayed_anno = -1;
     public peerId: string;
     constructor() {
-        loading();
+        //loading();
         // scope.self = this;
         this.jSlider = $("#resolution-slider");
         this.jSlider.slider();
         //this.jSlider.slider("pips");
-        this.jSlider.slider("float");
+        //this.jSlider.slider("float");
         this.anno_countdown = this.anno_view_time;
         this.I_am_alive();
+    }
+    public sec_to_time(sec: number) {
+        var sec_num = Math.floor(sec); // don't forget the second param
+        var hours = Math.floor(sec_num / 3600);
+        var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+        var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+        if (hours < 10) { hours = "0" + hours; }
+        if (minutes < 10) { minutes = "0" + minutes; }
+        if (seconds < 10) { seconds = "0" + seconds; }
+        var time = hours + ':' + minutes + ':' + seconds;
+        return time;
     }
 
     private I_am_alive() {
@@ -231,16 +243,17 @@ class VideoInstructionsCtrl {
         this.last_video_time = this.video_time;
         this.video_time = time;
         this.jSlider.slider({ value: time });
-        var anno_at = this.get_time_between(this.last_video_time, time);
-        //console.log('anno_at',anno_at);
+        var anno_at = this.get_time_between(this.last_video_time, this.video_time);
+        console.log('anno_at debug; anno_at:', anno_at, 'is playing:', this.playing, 'last, current', this.last_video_time, this.video_time);
         if (this.playing && anno_at >= 0) {
             //console.log('controls, passed anno!',anno_at);
             this.pause();            
-            this.set_video_time(anno_at);
+            this.set_video_time(anno_at + 0.1);
             this.start_anno_countdown();
             this.last_video_time = anno_at;
         }
         this.display_anno_status(time);
+        jQuery('#video-time').text(this.sec_to_time(time));
     }
 
     public display_anno_status(time: number) {
@@ -293,7 +306,7 @@ class VideoInstructionsCtrl {
                 this.video_time = ui.value;
             }
         });
-        this.jSlider.slider("float");
+        //this.jSlider.slider("float");
         this.update_markers();
         this.set_video_time(0);
     }
@@ -367,6 +380,7 @@ class VideoInstructionsCtrl {
 
         this.annotated_times = this.video_anno_map[url];
         this.update_markers();
+        this.pause();
         //this.set_video_time(0);
     }
 
